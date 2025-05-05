@@ -18,11 +18,11 @@ DEMONSTRATIVO DE FATURAMENTO
 @HISTORY 03/12/2020, FRANK ZWARG FUGA, FONTE PRODUTIZADO.
 /*/
 USER FUNCTION XFATRET()
-LOCAL   _AAREAOLD := GETAREA()
-LOCAL   _AAREASM0 := SM0->(GETAREA())
-Local cFilBkp	  := cFilAnt
-PRIVATE CPERG     := "LOCP013"
-Private c_Local   := GetTempPath()
+	LOCAL   _AAREAOLD := GETAREA()
+	LOCAL   _AAREASM0 := SM0->(GETAREA())
+	Local cFilBkp	  := cFilAnt
+	PRIVATE CPERG     := "LOCP013"
+	Private c_Local   := GetTempPath()
 
 	IF PERGPARAM(CPERG)
 		//Valida se o usuùrio pode acessar informaùùes da filial indicada
@@ -55,64 +55,68 @@ RETURN
 ùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùù
 */
 STATIC FUNCTION IMPREL()
-Local _CTIPO		:= ""
-Local _APRODUTOS  	:= {}
-Local _DDTINI		:= STOD("")
-Local _DDTFIM		:= STOD("")
-Local _CCONTRATO  	:= ""
-Local _CEMPRESA   	:= ""
-Local _COBSFAT   	:= ""
-Local CCNPJ			:= ""
-Local CEND			:= ""
-Local CBAIRRO		:= ""
-Local CCIDADE		:= ""
-Local CCEP			:= ""
-Local CUF			:= ""
-Local CTEL			:= ""
-Local CFAX			:= ""
-Local cAliasSc6		:= GetNextAlias()
-Local cPeriodo  	:= ""
-Local cChave 		:= ""
-Local CLOGO			:= ""
-Local CARQUIVO   	:= ""
-Local _CQUERY      	:= ""
-Local cAsPedido		:= ""
-Local I           	:= 0
-Local NLIN        	:= 10
-Local _NTOTAL      	:= 0
-Local _NVALOR      	:= 0
-Local nTamLin   	:= 10
-Local AAREASM0		:= {}
-Local aAreaSC6  	:= SC6->(GetArea())
-Local aAreaFPA  	:= FPA->(GetArea())
-Local OREPORT
-Local OBRUSH      	:= TBRUSH():NEW("",CLR_HGRAY)
-Local LADJUSTTOLEGACY := .F.
-Local LDISABLESETUP   := .t.//DENNIS CALABREZ - CHAMADO 30566 08/03/23 - ALTERADO PARA .T., POIS ESTAVA COM PROBLEMAS COM O TOTVS PRINTER PARA A GERAùùO DO ARQUIVO DE IMPRESSùO
-Local lLocr003A 	:= ExistBlock("LOCR003A")
-Local lMvLocBac		:= SuperGetMv("MV_LOCBAC",.F.,.F.) //Integraùùo com Mùdulo de Locaùùes SIGALOC
-Local oStatement
-Local aObra         := {}
-Local lGera			:= .F.
-Local cVar 			:= ""
-Local xT
-Local cDescLogo		:= ""
-Local cGrpCompany	:= ""
-Local cCodEmpGrp	:= ""
-Local cUnitGrp		:= ""
-Local cFilGrp		:= ""
-Local cCmpUsr       := GetMv("MV_CMPUSR",,"")
-Local _cFinalQuery 	:= ""
-Local aBindParam 	:= {}
+	Local _CTIPO		:= ""
+	Local _APRODUTOS  	:= {}
+	Local _DDTINI		:= STOD("")
+	Local _DDTFIM		:= STOD("")
+	Local _CCONTRATO  	:= ""
+	Local _CEMPRESA   	:= ""
+	Local _COBSFAT   	:= ""
+	Local CCNPJ			:= ""
+	Local CEND			:= ""
+	Local CBAIRRO		:= ""
+	Local CCIDADE		:= ""
+	Local CCEP			:= ""
+	Local CUF			:= ""
+	Local CTEL			:= ""
+	Local CFAX			:= ""
+	Local cAliasSc6		:= GetNextAlias()
+	Local cPeriodo  	:= ""
+	Local cChave 		:= ""
+	Local CLOGO			:= ""
+	Local CARQUIVO   	:= ""
+	Local _CQUERY      	:= ""
+	Local cAsPedido		:= ""
+	Local I           	:= 0
+	Local NLIN        	:= 10
+	Local _NTOTAL      	:= 0
+	Local _NVALOR      	:= 0
+	Local nTamLin   	:= 10
+	Local AAREASM0		:= {}
+	Local aAreaSC6  	:= SC6->(GetArea())
+	Local aAreaFPA  	:= FPA->(GetArea())
+	Local OREPORT
+	Local OBRUSH      	:= TBRUSH():NEW("",CLR_HGRAY)
+	Local LADJUSTTOLEGACY := .F.
+	Local LDISABLESETUP   := .t.//DENNIS CALABREZ - CHAMADO 30566 08/03/23 - ALTERADO PARA .T., POIS ESTAVA COM PROBLEMAS COM O TOTVS PRINTER PARA A GERAùùO DO ARQUIVO DE IMPRESSùO
+	Local lLocr003A 	:= ExistBlock("LOCR003A")
+	Local lMvLocBac		:= SuperGetMv("MV_LOCBAC",.F.,.F.) //Integraùùo com Mùdulo de Locaùùes SIGALOC
+	Local oStatement
+	Local aObra         := {}
+	Local lGera			:= .F.
+	Local cVar 			:= ""
+	Local xT
+	Local W
+	Local Z
+	Local Y
+	Local L
+	Local cDescLogo		:= ""
+	Local cGrpCompany	:= ""
+	Local cCodEmpGrp	:= ""
+	Local cUnitGrp		:= ""
+	Local cFilGrp		:= ""
+	Local cCmpUsr       := GetMv("MV_CMPUSR",,"")
+	Local _cFinalQuery 	:= ""
+	Local aBindParam 	:= {}
 //--------- GABRIEL 
-Local cCampos		:= ""
-Local cAliasSF3		:= GetNextAlias()
-Local cF2_DOC   := ""
-Local cF2_SERIE     := ""
-Local cF2_SERIEV    := "" //sÈrie de visualizaÁ„o
-Local cF2_CLIENTE   := ""
-Local cF2_LOJA      := ""
-Local cF2_EMISSAO   := ""
+	Local cCampos		:= ""
+	Local cAliasSF3		:= GetNextAlias()
+	Local cF2_DOC   := ""
+	Local cF2_SERIE     := ""
+	Local cF2_SERIEV    := "" //sÈrie de visualizaÁ„o
+	Local cF2_CLIENTE   := ""
+	Local cF2_LOJA      := ""
+	Local cF2_EMISSAO   := ""
 
 
 
@@ -120,10 +124,10 @@ Local cF2_EMISSAO   := ""
 
 
 
-PRIVATE NMINLEFT   	:= 10
-PRIVATE NMAXWIDTH 	:= 584
-PRIVATE NMAXHEIGHT	:= 2900
-PRIVATE NMEIO		:= ((NMAXWIDTH+NMINLEFT)/2)
+	PRIVATE NMINLEFT   	:= 10
+	PRIVATE NMAXWIDTH 	:= 584
+	PRIVATE NMAXHEIGHT	:= 2900
+	PRIVATE NMEIO		:= ((NMAXWIDTH+NMINLEFT)/2)
 
 	CARQUIVO := STR0003 + ALLTRIM(MV_PAR01) + " - " + ALLTRIM(MV_PAR02) + "_" + DTOS(DATE()) + ".PDF" //"FATURA "
 
@@ -146,10 +150,10 @@ PRIVATE NMEIO		:= ((NMAXWIDTH+NMINLEFT)/2)
 		CEND     := ALLTRIM(SM0->M0_ENDCOB)
 		CBAIRRO  := ALLTRIM(SM0->M0_BAIRCOB)
 		CCIDADE  := ALLTRIM(SM0->M0_CIDCOB)
-		CCEP 	 := TRANSFORM(ALLTRIM(SM0->M0_CEPENT), "@R 99999-999")	
+		CCEP 	 := TRANSFORM(ALLTRIM(SM0->M0_CEPENT), "@R 99999-999")
 		// CCEP     := ALLTRIM(SM0->M0_CEPENT)  // ALTERADO DE SUBSTR(SM0->M0_CEPENT,1,5) + '-' + SUBSTR(SM0->M0_CEPCOB,6,3) GABRIEL 14042025
 		CUF	     := ALLTRIM(SM0->M0_ESTCOB)
-		CTEL 	 := TRANSFORM(ALLTRIM(SM0->M0_TEL), "@R (99) 9999-9999")  
+		CTEL 	 := TRANSFORM(ALLTRIM(SM0->M0_TEL), "@R (99) 9999-9999")
 		CRAZAO 	 := ALLTRIM(SM0->M0_FULNAME) // GABRIEL 09042025
 		// IF EMPTY(ALLTRIM(SM0->M0_FAX))
 		// 	CFAX := ""
@@ -157,32 +161,32 @@ PRIVATE NMEIO		:= ((NMAXWIDTH+NMINLEFT)/2)
 		// 	CFAX := "(" + SUBSTR(SM0->M0_FAX,4,2) + ") " + SUBSTR(SM0->M0_FAX,7,4) + "-" + SUBSTR(SM0->M0_FAX,11,4)
 		// ENDIF
 		CCNPJ    := SUBSTR(SM0->M0_CGC,1,2) + "." + SUBSTR(SM0->M0_CGC,3,3) + "." + SUBSTR(SM0->M0_CGC,6,3) + "/" +;
-					SUBSTR(SM0->M0_CGC,9,4) + "-" + SUBSTR(SM0->M0_CGC,13,2)
+			SUBSTR(SM0->M0_CGC,9,4) + "-" + SUBSTR(SM0->M0_CGC,13,2)
 	ENDIF
 	SM0->(RESTAREA(AAREASM0))
 // LOGO GABRIEL 
 // Pega informaÁıes da empresa logada
-cCodEmpGrp := AllTrim(FWCodEmp())     // CÛdigo da empresa (ex: 03)
-cFilGrp    := AllTrim(FWFilial())     // CÛdigo da filial (ex: 01)
+	cCodEmpGrp := AllTrim(FWCodEmp())     // CÛdigo da empresa (ex: 03)
+	cFilGrp    := AllTrim(FWFilial())     // CÛdigo da filial (ex: 01)
 
 // Caminho base da imagem
-cCaminhoLogo := GetSrvProfString("StartPath", "")
+	cCaminhoLogo := GetSrvProfString("StartPath", "")
 
 // Monta nome do logo com "01" fixo no meio
-cDescLogo := "01" + cCodEmpGrp + cFilGrp
+	cDescLogo := "01" + cCodEmpGrp + cFilGrp
 
 // Tenta carregar o logo principal
-cLogo := cCaminhoLogo + "lgmid" + cDescLogo + ".png"
+	cLogo := cCaminhoLogo + "lgmid" + cDescLogo + ".png"
 
 // Fallback para logo padr„o
-If !File(cLogo)
-	cLogo := cCaminhoLogo + "lgmid.png"
-EndIf
+	If !File(cLogo)
+		cLogo := cCaminhoLogo + "lgmid.png"
+	EndIf
 
 // Fallback final para bitmap padr„o
-If !File(cLogo)
-	cLogo := cCaminhoLogo + "lgrl99.bmp"
-EndIf
+	If !File(cLogo)
+		cLogo := cCaminhoLogo + "lgrl99.bmp"
+	EndIf
 
 	// // LOGO
 	// //AJUSTE PARA SAIR O LOGO POR FILIAL LOGADA NO SISTEMA - DENNIS CARD 1334 - INICIO
@@ -229,7 +233,7 @@ EndIf
 	_CQUERY += " 			THEN 'ISENTO'"
 	_CQUERY += " 			ELSE A1_INSCR   END A1_INSCR , SE1NF.E1_VENCTO VENCTO,"
 	// _CQUERY += " 	   F2_VALBRUT, F2_DESCONT, SUM(COALESCE(SE1IMP.E1_VALOR,0)) VALRET,"
-	// _CQUERY += " 	   F2_VALBRUT - COALESCE(F2_DESCONT,0) - SUM(COALESCE(SE1IMP.E1_VALOR,0)) - SE1NF.E1_IRRF TOTAL,"  // ALTERADO 22042025 GABRIEL 
+	// _CQUERY += " 	   F2_VALBRUT - COALESCE(F2_DESCONT,0) - SUM(COALESCE(SE1IMP.E1_VALOR,0)) - SE1NF.E1_IRRF TOTAL,"  // ALTERADO 22042025 GABRIEL
 	// _CQUERY += " 	   F2_VALBRUT, F2_DESCONT, SUM(COALESCE(SE1IMP.E1_VALOR,0)) VALRET,"
 	_CQUERY += " 	   F2_VALBRUT, F2_VALIRRF, F2_DESCONT, SUM(COALESCE(SE1IMP.E1_VALOR,0)) VALRET," //adicionado 29042025 gabriel
 	_CQUERY += " 	   SUM(COALESCE(D2_VALIRRF,0)) D2_VALIRRF,"
@@ -268,11 +272,11 @@ EndIf
 	_CQUERY += "		FROM " + RETSQLNAME("SF2") + " SF2 "
 	_CQUERY += "        INNER JOIN " + RETSQLNAME("SA1") + " SA1    ON  SF2.F2_CLIENTE = A1_COD       AND  SF2.F2_LOJA = SA1.A1_LOJA "
 	_CQUERY += "                                                    AND SA1.D_E_L_E_T_ = '' "
-	
+
 	If !empty(alltrim(xFilial("SA1")))
 		_cQuery += " AND SA1.A1_FILIAL = '"+xFilial("SA1")+"' "
 	EndIf
-	
+
 	_CQUERY += "        INNER JOIN " + RETSQLNAME("SD2") + " SD2    ON  SD2.D2_FILIAL  = F2_FILIAL    AND  SD2.D2_DOC  = F2_DOC "
 	_CQUERY += "                                                    AND SD2.D2_SERIE   = F2_SERIE "
 	_CQUERY += "                                                    AND SD2.D_E_L_E_T_ = '' "
@@ -318,7 +322,7 @@ EndIf
 	_CQUERY += " 			THEN 'ISENTO'"
 	_CQUERY += " 			ELSE A2_INSCR END A2_INSCR, SE1NF.E1_VENCTO VENCTO,"
 	// _CQUERY += " 	   F2_VALBRUT, F2_DESCONT, SUM(COALESCE(SE1IMP.E1_VALOR,0)) VALRET,"
-	// _CQUERY += " 	   F2_VALBRUT - COALESCE(F2_DESCONT,0) - SUM(COALESCE(SE1IMP.E1_VALOR,0)) - SE1NF.E1_IRRF TOTAL," // alterado 22042025 GABRIEL 
+	// _CQUERY += " 	   F2_VALBRUT - COALESCE(F2_DESCONT,0) - SUM(COALESCE(SE1IMP.E1_VALOR,0)) - SE1NF.E1_IRRF TOTAL," // alterado 22042025 GABRIEL
 	_CQUERY += " 	   F2_VALBRUT, F2_VALIRRF, F2_DESCONT, SUM(COALESCE(SE1IMP.E1_VALOR,0)) VALRET,"
 	_CQUERY += " 	   SUM(COALESCE(D2_VALIRRF,0)) D2_VALIRRF,"
 	_CQUERY += " 	   SUM(COALESCE(D2_BASEIRR,0)) D2_BASEIRR,"
@@ -402,7 +406,7 @@ EndIf
 	_CQUERY += "    AND SF2.D_E_L_E_T_ = ''"
 	_CQUERY += "    AND SF2.F2_TIPO IN ('D','B') "
 	_CQUERY += "  GROUP BY F2_FILIAL , F2_SERIE, F2_DOC, F2_EMISSAO, A2_NOME, A2_END, A2_BAIRRO, A2_MUN, A2_EST, A2_CEP, A2_CGC, A2_INSCR, "
-	// _CQUERY += " 		  SE1NF.E1_VENCTO, F2_VALBRUT, F2_DESCONT , A2_END, A2_BAIRRO, A2_MUN, A2_EST, A2_CEP,D2_VALIRRF,D2_BASEIRR,D2_ALQIRRF," 
+	// _CQUERY += " 		  SE1NF.E1_VENCTO, F2_VALBRUT, F2_DESCONT , A2_END, A2_BAIRRO, A2_MUN, A2_EST, A2_CEP,D2_VALIRRF,D2_BASEIRR,D2_ALQIRRF,"
 	_CQUERY += " 		  SE1NF.E1_VENCTO, F2_VALBRUT, F2_VALIRRF, F2_DESCONT , A2_END, A2_BAIRRO, A2_MUN, A2_EST, A2_CEP,D2_VALIRRF,D2_BASEIRR,D2_ALQIRRF,"
 	_CQUERY += " 		  A2_END, A2_BAIRRO, A2_MUN, A2_EST, A2_CEP, A6_COD, A6_AGENCIA, A6_DVAGE, A6_NUMCON, A6_DVCTA, SE1NF.E1_IRRF, FPZ_PROJET, F4_FINALID, FP0_XLOCAL, FP0_XBANCO , FP0_XAGENC, FP0_XCONTA"
 */
@@ -504,14 +508,14 @@ EndIf
 
 		//OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)-20, STR0005, OFONT3:OFONT ) //"FATURA"
 		OREPORT:SAY( NLIN, NMEIO-(len(STR0005)/2), STR0005, OFONT3:OFONT ) //"FATURA"
-		
+
 
 		_CEMPRESA := ALLTRIM(SM0->M0_NOMECOM)
 		XT  := MLCOUNT(_CEMPRESA,30)
-		FOR I:=1 TO XT
+		FOR Z:=1 TO XT
 			// OREPORT:SAY( NLIN, NMINLEFT+103, MEMOLINE(_CEMPRESA ,30, I ), OFONT4:OFONT )
 			NLIN +=  15
-		NEXT I
+		NEXT Z
 
 		NLIN :=  53 			// NLIN TOTAL: 53
 
@@ -528,33 +532,33 @@ EndIf
 		NLIN +=  15 			// NLIN TOTAL: 108
 
 		OREPORT:SAY( NLIN, NMINLEFT+10, STR0008, OFONT1:OFONT ) //"BAIRRO: "
-	//	OREPORT:SAY( NLIN, NMINLEFT+50, ALLTRIM(SM0->M0_BAIRCOB), OFONT2:OFONT )
+		//	OREPORT:SAY( NLIN, NMINLEFT+50, ALLTRIM(SM0->M0_BAIRCOB), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMINLEFT+50, substr(CBAIRRO,1,20), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMEIO+10, "PROJETO: ", OFONT1:OFONT ) //STR0032 //"PROJETO: "
 		OREPORT:SAY( NLIN, NMEIO+80, ALLTRIM(TRBFAT->FPZ_PROJET), OFONT2:OFONT )
-		
+
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0009, OFONT1:OFONT ) //"CIDADE: "
-	//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, ALLTRIM(SM0->M0_CIDCOB), OFONT2:OFONT )
+		//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, ALLTRIM(SM0->M0_CIDCOB), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+35, substr(CCIDADE,1,24), OFONT2:OFONT )
 
 		NLIN +=  15 			// NLIN TOTAL: 123
 
-	//	_CVAR := SUBSTR(SM0->M0_CEPCOB,1,5) + '-' + SUBSTR(SM0->M0_CEPCOB,6,3)
+		//	_CVAR := SUBSTR(SM0->M0_CEPCOB,1,5) + '-' + SUBSTR(SM0->M0_CEPCOB,6,3)
 		OREPORT:SAY( NLIN, NMINLEFT+10, STR0010, OFONT1:OFONT ) //"CEP: "
-	//	OREPORT:SAY( NLIN, NMINLEFT+50, _CVAR, OFONT2:OFONT )
+		//	OREPORT:SAY( NLIN, NMINLEFT+50, _CVAR, OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMINLEFT+50, CCEP, OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMEIO+10, "CONTRATO", OFONT1:OFONT ) //STR0032 //"CONTRATO: "
 		OREPORT:SAY( NLIN, NMEIO+80, ALLTRIM(TRBFAT->FP0_XLOCAL), OFONT2:OFONT ) // GABRIEL   -- CERTO
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0011, OFONT1:OFONT ) //"UF: "
-	//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, ALLTRIM(SM0->M0_ESTCOB), OFONT2:OFONT )
+		//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, ALLTRIM(SM0->M0_ESTCOB), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CUF, OFONT2:OFONT )
 		NLIN +=  15 			// NLIN TOTAL: 138
 
-	//	_CVAR := "(" + SUBSTR(SM0->M0_TEL,4,2) + ") " + SUBSTR(SM0->M0_TEL,7,4) + "-" + SUBSTR(SM0->M0_TEL,11,4)
+		//	_CVAR := "(" + SUBSTR(SM0->M0_TEL,4,2) + ") " + SUBSTR(SM0->M0_TEL,7,4) + "-" + SUBSTR(SM0->M0_TEL,11,4)
 		// OREPORT:SAY( NLIN, NMINLEFT+10, "RAZ√O:", OFONT1:OFONT ) //"FONE: "
 		// OREPORT:SAY( NLIN, NMINLEFT+50, CRAZAO, OFONT2:OFONT )
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDEREùO: "
-		OREPORT:SAY( NLIN, NMINLEFT+60, substr(CEND,1,51 ), OFONT2:OFONT )
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDEREùO: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, substr(CEND,1,51 ), OFONT2:OFONT )
 
 		/*
 		IF EMPTY(ALLTRIM(SM0->M0_FAX))
@@ -564,25 +568,24 @@ EndIf
 		ENDIF
 		*/
 		// OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0012, OFONT1:OFONT ) //"FAX: "
-	//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, _CVAR, OFONT2:OFONT ) gabriel
+		//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, _CVAR, OFONT2:OFONT ) gabriel
 		// OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CTEL, OFONT2:OFONT )
-
+	 	OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+		OREPORT:SAY( NLIN, NMINLEFT+50, CCNPJ, OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMEIO+10, STR0014, OFONT1:OFONT ) //"DATA EMISSùO: " //emiss„o
 		OREPORT:SAY( NLIN, NMEIO+80, DTOC(STOD(TRBFAT->EMISSAO)), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMEIO+160, STR0022, OFONT1:OFONT ) //"VENCTO: "  // gabriel
-		OREPORT:SAY( NLIN, NMEIO+200, DTOC(STOD(TRBFAT->VENCTO)), OFONT2:OFONT )
-		NLIN +=  15 			// NLIN TOTAL: 153
-
-		/*
-		_CVAR := SUBSTR(SM0->M0_CGC,1,2) + "." + SUBSTR(SM0->M0_CGC,3,3) + "." + SUBSTR(SM0->M0_CGC,6,3) + "/" +;
-				SUBSTR(SM0->M0_CGC,9,4) + "-" + SUBSTR(SM0->M0_CGC,13,2)
-		*/
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
-	//	OREPORT:SAY( NLIN, NMINLEFT+50, _CVAR, OFONT2:OFONT )
-		OREPORT:SAY( NLIN, NMINLEFT+50, CCNPJ, OFONT2:OFONT )
-
+		OREPORT:SAY( NLIN, NMEIO+200, DTOC(STOD(TRBFAT->VENCTO)), OFONT2:OFONT )	
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0012, OFONT1:OFONT ) //"CCM: "
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CTEL, OFONT2:OFONT )
+		NLIN +=  15 			// NLIN TOTAL: 153
+		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDEREùO: "
+		OREPORT:SAY( NLIN, NMINLEFT+60, substr(CEND,1,51 ), OFONT2:OFONT )
+
+		
+
+		// OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0012, OFONT1:OFONT ) //"CCM: "
+		// OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CTEL, OFONT2:OFONT )
 
 		OREPORT:SAY( NLIN, NMEIO+10, STR0017, OFONT1:OFONT ) //"NùMERO PEDIDO: "
 		OREPORT:SAY( NLIN, NMEIO+80, TRBFAT->PEDIDO, OFONT2:OFONT )
@@ -609,12 +612,17 @@ EndIf
 		OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+20, ALLTRIM(TRBFAT->A1_EST), OFONT2:OFONT )
 
 		OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+60, STR0010, OFONT1:OFONT ) //"CEP: "
-		
+
 		OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+80, TRANSFORM(ALLTRIM(TRBFAT->A1_CEP),"@R 99999-999"), OFONT2:OFONT )
 		NLIN +=  15 			// NLIN TOTAL: 226
+		OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+		OREPORT:SAY( NLIN, NMINLEFT+60, Alltrim(Transform(TRBFAT->A1_CGC, "@!R NN.NNN.NNN/NNNN-99")), OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERECO: "
-		OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMEIO-80, STR0021, OFONT1:OFONT ) //"INSCRIùùO ESTADUAL: "
+		OREPORT:SAY( NLIN, NMEIO+15, ALLTRIM(TRBFAT->A1_INSCR), OFONT2:OFONT )
+		NLIN +=  15 			// NLIN TOTAL: 256
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERECO: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
 
 		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0008, OFONT1:OFONT ) //"BAIRRO: "
 		// OREPORT:SAY( NLIN, NMINLEFT+50, substr(TRBFAT->A1_BAIRRO,1,35), OFONT2:OFONT )
@@ -626,20 +634,30 @@ EndIf
 		// OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+20, ALLTRIM(TRBFAT->A1_EST), OFONT2:OFONT )
 
 		// OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+60, STR0010, OFONT1:OFONT ) //"CEP: "
-		
+
 		// OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+80, TRANSFORM(ALLTRIM(TRBFAT->A1_CEP),"@R 99999-999"), OFONT2:OFONT )
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, Alltrim(Transform(TRBFAT->A1_CGC, "@!R NN.NNN.NNN/NNNN-99")), OFONT2:OFONT )
+
+		// OREPORT:SAY( NLIN, NMEIO-80, STR0021, OFONT1:OFONT ) //"INSCRIùùO ESTADUAL: "
+		// OREPORT:SAY( NLIN, NMEIO+15, ALLTRIM(TRBFAT->A1_INSCR), OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERECO: "
+		OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
 		NLIN +=  15 			// NLIN TOTAL: 241
 
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
-		OREPORT:SAY( NLIN, NMINLEFT+60, Alltrim(Transform(TRBFAT->A1_CGC, "@!R NN.NNN.NNN/NNNN-99")), OFONT2:OFONT )
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERECO: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, NMEIO-80, STR0021, OFONT1:OFONT ) //"INSCRIùùO ESTADUAL: "
-		OREPORT:SAY( NLIN, NMEIO+15, ALLTRIM(TRBFAT->A1_INSCR), OFONT2:OFONT )
-		NLIN +=  15 			// NLIN TOTAL: 256
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, Alltrim(Transform(TRBFAT->A1_CGC, "@!R NN.NNN.NNN/NNNN-99")), OFONT2:OFONT )
+
+		// OREPORT:SAY( NLIN, NMEIO-80, STR0021, OFONT1:OFONT ) //"INSCRIùùO ESTADUAL: "
+		// OREPORT:SAY( NLIN, NMEIO+15, ALLTRIM(TRBFAT->A1_INSCR), OFONT2:OFONT )
+		// NLIN +=  15 			// NLIN TOTAL: 256
 
 		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0022, OFONT1:OFONT ) //"VENCTO: "
 		// OREPORT:SAY( NLIN, NMINLEFT+60, DTOC(STOD(TRBFAT->VENCTO)), OFONT2:OFONT )
-	//	OREPORT:SAY( NLIN, NMINLEFT+100, TRANSFORM(TRBFAT->F2_VALBRUT,"@E 9,999,999,999.99"), OFONT2:OFONT ) COMENTADO POR GUILHERME CORONADO
+		//	OREPORT:SAY( NLIN, NMINLEFT+100, TRANSFORM(TRBFAT->F2_VALBRUT,"@E 9,999,999,999.99"), OFONT2:OFONT ) COMENTADO POR GUILHERME CORONADO
 		NLIN +=  25 			// NLIN TOTAL: 281
 
 		If SELECT("TRBPRD") > 0
@@ -647,77 +665,77 @@ EndIf
 		EndIf
 
 		//Montando a consulta dos pedidos
-	// 	oStatement := NIL
-	// 	oStatement := FWPreparedStatement():New()
-	// 	_CQUERY := " SELECT CASE WHEN MAX(COALESCE(FPN_COD, '')) = ''"
-	// 	_CQUERY += " 			THEN CASE WHEN FP0_MINPFT = '1'"
-	// 	_CQUERY += " 					  THEN '2'"
-	// 	_CQUERY += " 					  ELSE '1' END"
-	// 	_CQUERY += " 			ELSE '3' END TIPO,"
-	// 	_CQUERY += " 	   C6_ITEM, "
-	// 	_CQUERY += " 	   CASE WHEN COALESCE(FPA_DESGRU, '') = ''"
-	// 	_CQUERY += " 			THEN ''"
-	// //	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_DESGRU, ''))) + ' / ' END + "
-	// 	_CQUERY += " 			ELSE FPA_DESGRU END FPA_DESGRU,"
-	// 	_CQUERY += " 	   CASE WHEN COALESCE(FPA_GRUA, '') = ''"
-	// 	_CQUERY += " 			THEN ''"
-	// //	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_GRUA, ''))) + ' / ' END +"
-	// 	_CQUERY += " 			ELSE FPA_GRUA END FPA_GRUA,"
-	// 	_CQUERY += " 	   CASE WHEN COALESCE(FPA_CARAC, '') = ''"
-	// 	_CQUERY += " 			THEN ''"
-	// //	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_CARAC, ''))) END PRODUTO,"
-	// 	_CQUERY += " 			ELSE FPA_CARAC END FPA_CARAC,"
-	// 	_CQUERY += " 	   C6_QTDVEN, C6_PRCVEN, C6_VALOR,"
-	// 	_CQUERY += " 	   CASE WHEN MAX(COALESCE(FPN_COD, '')) = '' AND MAX(COALESCE(FPA_DTINI, '')) = ''"
-	// 	_CQUERY += " 			THEN MIN(COALESCE(FPA_DTINI, ''))"
-	// 	_CQUERY += " 			ELSE MIN(COALESCE(FPN_DTINIC, '')) END DTINI,"
-	// 	_CQUERY += " 	   CASE WHEN MAX(COALESCE(FPN_COD, '')) = '' AND MAX(COALESCE(FPA_DTFIM, '')) = ''"
-	// 	_CQUERY += "            THEN MAX(COALESCE(FPA_DTFIM, ''))"
-	// 	_CQUERY += "            ELSE MAX(COALESCE(FPN_DTFIM, '')) END DTFIM, COALESCE(ZA0.FP0_XLOCAL, '') CONTRATO"
-	// 	_CQUERY += "   FROM " + RETSQLNAME("SC5") + " SC5 "
-	// 	_CQUERY += " INNER JOIN " + RETSQLNAME("SC6") + " SC6 (NOLOCK)"
-	// 	_CQUERY += "     ON C5_FILIAL = C6_FILIAL"
-	// 	_CQUERY += "    AND C5_NUM    = C6_NUM"
-	// 	_CQUERY += "    AND SC6.D_E_L_E_T_ = ''"
+		// 	oStatement := NIL
+		// 	oStatement := FWPreparedStatement():New()
+		// 	_CQUERY := " SELECT CASE WHEN MAX(COALESCE(FPN_COD, '')) = ''"
+		// 	_CQUERY += " 			THEN CASE WHEN FP0_MINPFT = '1'"
+		// 	_CQUERY += " 					  THEN '2'"
+		// 	_CQUERY += " 					  ELSE '1' END"
+		// 	_CQUERY += " 			ELSE '3' END TIPO,"
+		// 	_CQUERY += " 	   C6_ITEM, "
+		// 	_CQUERY += " 	   CASE WHEN COALESCE(FPA_DESGRU, '') = ''"
+		// 	_CQUERY += " 			THEN ''"
+		// //	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_DESGRU, ''))) + ' / ' END + "
+		// 	_CQUERY += " 			ELSE FPA_DESGRU END FPA_DESGRU,"
+		// 	_CQUERY += " 	   CASE WHEN COALESCE(FPA_GRUA, '') = ''"
+		// 	_CQUERY += " 			THEN ''"
+		// //	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_GRUA, ''))) + ' / ' END +"
+		// 	_CQUERY += " 			ELSE FPA_GRUA END FPA_GRUA,"
+		// 	_CQUERY += " 	   CASE WHEN COALESCE(FPA_CARAC, '') = ''"
+		// 	_CQUERY += " 			THEN ''"
+		// //	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_CARAC, ''))) END PRODUTO,"
+		// 	_CQUERY += " 			ELSE FPA_CARAC END FPA_CARAC,"
+		// 	_CQUERY += " 	   C6_QTDVEN, C6_PRCVEN, C6_VALOR,"
+		// 	_CQUERY += " 	   CASE WHEN MAX(COALESCE(FPN_COD, '')) = '' AND MAX(COALESCE(FPA_DTINI, '')) = ''"
+		// 	_CQUERY += " 			THEN MIN(COALESCE(FPA_DTINI, ''))"
+		// 	_CQUERY += " 			ELSE MIN(COALESCE(FPN_DTINIC, '')) END DTINI,"
+		// 	_CQUERY += " 	   CASE WHEN MAX(COALESCE(FPN_COD, '')) = '' AND MAX(COALESCE(FPA_DTFIM, '')) = ''"
+		// 	_CQUERY += "            THEN MAX(COALESCE(FPA_DTFIM, ''))"
+		// 	_CQUERY += "            ELSE MAX(COALESCE(FPN_DTFIM, '')) END DTFIM, COALESCE(ZA0.FP0_XLOCAL, '') CONTRATO"
+		// 	_CQUERY += "   FROM " + RETSQLNAME("SC5") + " SC5 "
+		// 	_CQUERY += " INNER JOIN " + RETSQLNAME("SC6") + " SC6 (NOLOCK)"
+		// 	_CQUERY += "     ON C5_FILIAL = C6_FILIAL"
+		// 	_CQUERY += "    AND C5_NUM    = C6_NUM"
+		// 	_CQUERY += "    AND SC6.D_E_L_E_T_ = ''"
 
-	// 	If lMvLocBac
+		// 	If lMvLocBac
 
-	// 		_CQUERY += " INNER JOIN " + RetSqlName("FPY") + " FPY ON "
-	// 		_CQUERY += " FPY.FPY_FILIAL = '" + xFilial("FPY") +  "' "
-	// 		_CQUERY += " 	AND FPY.D_E_L_E_T_ = ' ' "
-	// 		_CQUERY += " 	AND FPY_PEDVEN = C5_NUM "
-	// 		_CQUERY += " INNER JOIN " + RetSqlName("FPZ") + " FPZ ON "
-	// 		_CQUERY += "    FPZ.FPZ_FILIAL = '" + xFilial("FPZ") +  "' " //3
-	// 		_CQUERY += "    AND FPZ.D_E_L_E_T_ = ' '  "
-	// 		_CQUERY += "    AND FPZ_PEDVEN = C5_NUM "
-	// 		_CQUERY += "    AND FPZ_PROJET = FPY_PROJET " //4
-	// 		_CQUERY += "   AND FPZ_ITEM = C6_ITEM "
-	// 	EndIf
+		// 		_CQUERY += " INNER JOIN " + RetSqlName("FPY") + " FPY ON "
+		// 		_CQUERY += " FPY.FPY_FILIAL = '" + xFilial("FPY") +  "' "
+		// 		_CQUERY += " 	AND FPY.D_E_L_E_T_ = ' ' "
+		// 		_CQUERY += " 	AND FPY_PEDVEN = C5_NUM "
+		// 		_CQUERY += " INNER JOIN " + RetSqlName("FPZ") + " FPZ ON "
+		// 		_CQUERY += "    FPZ.FPZ_FILIAL = '" + xFilial("FPZ") +  "' " //3
+		// 		_CQUERY += "    AND FPZ.D_E_L_E_T_ = ' '  "
+		// 		_CQUERY += "    AND FPZ_PEDVEN = C5_NUM "
+		// 		_CQUERY += "    AND FPZ_PROJET = FPY_PROJET " //4
+		// 		_CQUERY += "   AND FPZ_ITEM = C6_ITEM "
+		// 	EndIf
 
-	// 	_CQUERY += " LEFT JOIN " + RETSQLNAME("FPN") + " ZLF (NOLOCK)"
-	// 	_CQUERY += "     ON C5_FILIAL = FPN_FILIAL"
-	// 	_CQUERY += "    AND C5_NUM    = FPN_NUMPV"
-	// 	_CQUERY += "    AND ZLF.D_E_L_E_T_ = ''"
-	// 	_CQUERY += " LEFT JOIN " + RETSQLNAME("FPA") + " ZAG (NOLOCK)"
-	// 	_CQUERY += "     ON C6_FILIAL = FPA_FILIAL"
-	// 	_CQUERY += "    AND ZAG.D_E_L_E_T_ = ''"
-	// 	If lMvLocBac
-	// 		_CQUERY += "   AND FPA_AS = FPZ_AS "
-	// 	Else
-	// 		_CQUERY += "   AND FPA_AS = C6_XAS "
-	// 	EndIf
-	// 	_CQUERY += " LEFT JOIN " + RETSQLNAME("FP0") + " ZA0 (NOLOCK)"
-	// 	_CQUERY += "     ON FPA_FILIAL = FP0_FILIAL"
-	// 	_CQUERY += "    AND FPA_PROJET = FP0_PROJET"
-	// 	_CQUERY += "    AND ZA0.D_E_L_E_T_ = ''"
-	// 	_CQUERY += "  WHERE C5_FILIAL = '" + XFILIAL("SC5") + "'"
-	// 	_CQUERY += "    AND C6_NOTA   = ? " // Inject 1
-	// 	_CQUERY += "    AND C6_SERIE  = ? " // Inject 2
-	// 	_CQUERY += "    AND SC5.D_E_L_E_T_ = ''"
-	// 	_CQUERY += "  GROUP BY FP0_MINPFT,ZA0.FP0_XLOCAL, C6_ITEM, C6_QTDVEN,FPA_DESGRU, FPA_GRUA, FPA_CARAC, C6_PRCVEN, C6_VALOR"
-	// 	_CQUERY += "  ORDER BY C6_ITEM"'
-	// *****************************************************************************************************
-	// GABRIEL PAIVA ALTERA«√O 14042025
+		// 	_CQUERY += " LEFT JOIN " + RETSQLNAME("FPN") + " ZLF (NOLOCK)"
+		// 	_CQUERY += "     ON C5_FILIAL = FPN_FILIAL"
+		// 	_CQUERY += "    AND C5_NUM    = FPN_NUMPV"
+		// 	_CQUERY += "    AND ZLF.D_E_L_E_T_ = ''"
+		// 	_CQUERY += " LEFT JOIN " + RETSQLNAME("FPA") + " ZAG (NOLOCK)"
+		// 	_CQUERY += "     ON C6_FILIAL = FPA_FILIAL"
+		// 	_CQUERY += "    AND ZAG.D_E_L_E_T_ = ''"
+		// 	If lMvLocBac
+		// 		_CQUERY += "   AND FPA_AS = FPZ_AS "
+		// 	Else
+		// 		_CQUERY += "   AND FPA_AS = C6_XAS "
+		// 	EndIf
+		// 	_CQUERY += " LEFT JOIN " + RETSQLNAME("FP0") + " ZA0 (NOLOCK)"
+		// 	_CQUERY += "     ON FPA_FILIAL = FP0_FILIAL"
+		// 	_CQUERY += "    AND FPA_PROJET = FP0_PROJET"
+		// 	_CQUERY += "    AND ZA0.D_E_L_E_T_ = ''"
+		// 	_CQUERY += "  WHERE C5_FILIAL = '" + XFILIAL("SC5") + "'"
+		// 	_CQUERY += "    AND C6_NOTA   = ? " // Inject 1
+		// 	_CQUERY += "    AND C6_SERIE  = ? " // Inject 2
+		// 	_CQUERY += "    AND SC5.D_E_L_E_T_ = ''"
+		// 	_CQUERY += "  GROUP BY FP0_MINPFT,ZA0.FP0_XLOCAL, C6_ITEM, C6_QTDVEN,FPA_DESGRU, FPA_GRUA, FPA_CARAC, C6_PRCVEN, C6_VALOR"
+		// 	_CQUERY += "  ORDER BY C6_ITEM"'
+		// *****************************************************************************************************
+		// GABRIEL PAIVA ALTERA«√O 14042025
 		//Montando a consulta dos pedidos
 		oStatement := NIL
 		oStatement := FWPreparedStatement():New()
@@ -729,15 +747,15 @@ EndIf
 		_CQUERY += " 	   C6_ITEM, "
 		_CQUERY += " 	   CASE WHEN COALESCE(FPA_DESGRU, '') = ''"
 		_CQUERY += " 			THEN ''"
-	//	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_DESGRU, ''))) + ' / ' END + "
+		//	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_DESGRU, ''))) + ' / ' END + "
 		_CQUERY += " 			ELSE FPA_DESGRU END FPA_DESGRU,"
 		_CQUERY += " 	   CASE WHEN COALESCE(FPA_GRUA, '') = ''"
 		_CQUERY += " 			THEN ''"
-	//	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_GRUA, ''))) + ' / ' END +"
+		//	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_GRUA, ''))) + ' / ' END +"
 		_CQUERY += " 			ELSE FPA_GRUA END FPA_GRUA,"
 		_CQUERY += " 	   CASE WHEN COALESCE(FPA_CARAC, '') = ''"
 		_CQUERY += " 			THEN ''"
-	//	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_CARAC, ''))) END PRODUTO,"
+		//	_CQUERY += " 			ELSE RTRIM(LTRIM(COALESCE(FPA_CARAC, ''))) END PRODUTO,"
 		_CQUERY += " 			ELSE FPA_CARAC END FPA_CARAC,"
 		_CQUERY += " 	   C6_QTDVEN, C6_PRCVEN, C6_VALOR,"
 		_CQUERY += " 	   CASE WHEN MAX(COALESCE(FPN_COD, '')) = '' AND MAX(COALESCE(FPA_DTINI, '')) = ''"
@@ -792,7 +810,7 @@ EndIf
 		_CQUERY += "  GROUP BY FP0_MINPFT,ZA0.FP0_XLOCAL, C6_ITEM, C6_QTDVEN,FPA_DESGRU, FPA_GRUA, FPA_CARAC, C6_PRCVEN, C6_VALOR,"
 		_CQUERY += "           ZA0.FP0_XBANCO, ZA0.FP0_XAGENC, ZA0.FP0_XCONTA"
 		_CQUERY += "  ORDER BY C6_ITEM"
-	//******************************************************************************************************
+		//******************************************************************************************************
 
 		//Seta as variaveis da query
 		oStatement:SetQuery(_CQUERY)
@@ -819,12 +837,12 @@ EndIf
 
 			_CTIPO     := TRBPRD->TIPO
 			_CCONTRATO := ALLTRIM(TRBPRD->CONTRATO)
-			 _CPRODUTO  := "ALLTRIM(TRBPRD->FPA_DESGRU)+' '+ALLTRIM(TRBPRD->FPA_GRUA)+' '+ALLTRIM(TRBPRD->FPA_CARAC)"
+			_CPRODUTO  := "ALLTRIM(TRBPRD->FPA_DESGRU)+' '+ALLTRIM(TRBPRD->FPA_GRUA)+' '+ALLTRIM(TRBPRD->FPA_CARAC)"
 			XT  := MLCOUNT(_CPRODUTO,65)
 
 
-			
-	
+
+
 			//Montando a consulta dos pedidos
 			oStatement := NIL
 			oStatement := FWPreparedStatement():New()
@@ -852,46 +870,46 @@ EndIf
 // 			//_cQuery += "WHERE SC6.C6_FILIAL = '" + MV_PAR04 + "' AND SC6.C6_NOTA = '" + TRBFAT->NUMFAT + "' AND "
 // 			_cQuery += "WHERE SC6.C6_FILIAL = ? AND SC6.C6_NOTA = ? AND " // Inject 1 e 2
 // 			_cquery += "SC6.D_E_L_E_T_=' ' "
-_cQuery := "SELECT C6_SERIE, C6_PRODUTO, C6_ITEM, C6_QTDVEN, C6_PRCVEN, C6_VALOR, C6_VALDESC, FPZ_VALUNI, FPZ_TOTAL "
+			_cQuery := "SELECT C6_SERIE, C6_PRODUTO, C6_ITEM, C6_QTDVEN, C6_PRCVEN, C6_VALOR, C6_VALDESC, FPZ_VALUNI, FPZ_TOTAL "
 
-If lMvLocBac
-    _cQuery += ", FPZ_PERLOC PERLOC, FPZ_FROTA FROTAX "
-    _cQuery += ", FPA.FPA_XPLACA FROTA "
-    _cQuery += ", FP0.FP0_XBANCO, FP0.FP0_XAGENC, FP0.FP0_XCONTA " // CAMPOS DA FP0
-Else
+			If lMvLocBac
+				_cQuery += ", FPZ_PERLOC PERLOC, FPZ_FROTA FROTAX "
+				_cQuery += ", FPA.FPA_XPLACA FROTA "
+				_cQuery += ", FP0.FP0_XBANCO, FP0.FP0_XAGENC, FP0.FP0_XCONTA " // CAMPOS DA FP0
+			Else
 //  _cQuery += ", C6_XPERLOC PERLOC, ' ' FROTA "
-EndIf
+			EndIf
 
-_cQuery += "FROM " + RetSqlName("SC6") + " SC6 "
+			_cQuery += "FROM " + RetSqlName("SC6") + " SC6 "
 
-If lMvLocBac
-    _cQuery += " INNER JOIN " + RetSqlName("FPY") + " FPY ON "
-    _cQuery += "     FPY.FPY_FILIAL = '" + xFilial("FPY") + "' "
-    _cQuery += "     AND FPY.D_E_L_E_T_ = ' ' "
-    _cQuery += "     AND FPY_PEDVEN = C6_NUM "
+			If lMvLocBac
+				_cQuery += " INNER JOIN " + RetSqlName("FPY") + " FPY ON "
+				_cQuery += "     FPY.FPY_FILIAL = '" + xFilial("FPY") + "' "
+				_cQuery += "     AND FPY.D_E_L_E_T_ = ' ' "
+				_cQuery += "     AND FPY_PEDVEN = C6_NUM "
 
-    _cQuery += " INNER JOIN " + RetSqlName("FPZ") + " FPZ ON "
-    _cQuery += "     FPZ.FPZ_FILIAL = '" + xFilial("FPZ") + "' "
-    _cQuery += "     AND FPZ.D_E_L_E_T_ = ' ' "
-    _cQuery += "     AND FPZ_PEDVEN = C6_NUM "
-    _cQuery += "     AND FPZ_PROJET = FPY_PROJET "
-    _cQuery += "     AND FPZ_ITEM = C6_ITEM "
+				_cQuery += " INNER JOIN " + RetSqlName("FPZ") + " FPZ ON "
+				_cQuery += "     FPZ.FPZ_FILIAL = '" + xFilial("FPZ") + "' "
+				_cQuery += "     AND FPZ.D_E_L_E_T_ = ' ' "
+				_cQuery += "     AND FPZ_PEDVEN = C6_NUM "
+				_cQuery += "     AND FPZ_PROJET = FPY_PROJET "
+				_cQuery += "     AND FPZ_ITEM = C6_ITEM "
 
-    _cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON "
-    _cQuery += "     FPA.FPA_FILIAL = '" + xFilial("FPA") + "' "
-    _cQuery += "     AND FPA.D_E_L_E_T_ = ' ' "
-    _cQuery += "     AND FPA_PROJET = FPZ_PROJET "
-    _cQuery += "     AND FPA_ITEREM = C6_ITEM "
+				_cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON "
+				_cQuery += "     FPA.FPA_FILIAL = '" + xFilial("FPA") + "' "
+				_cQuery += "     AND FPA.D_E_L_E_T_ = ' ' "
+				_cQuery += "     AND FPA_PROJET = FPZ_PROJET "
+				_cQuery += "     AND FPA_ITEREM = C6_ITEM "
 
-    // JOIN COM FP0
-    _cQuery += " LEFT JOIN " + RetSqlName("FP0") + " FP0 ON "
-    _cQuery += "     FP0.FP0_FILIAL = '" + xFilial("FP0") + "' "
-    _cQuery += "     AND FP0.D_E_L_E_T_ = ' ' "
-    _cQuery += "     AND FP0.FP0_PROJET = FPZ.FPZ_PROJET "
-EndIf
+				// JOIN COM FP0
+				_cQuery += " LEFT JOIN " + RetSqlName("FP0") + " FP0 ON "
+				_cQuery += "     FP0.FP0_FILIAL = '" + xFilial("FP0") + "' "
+				_cQuery += "     AND FP0.D_E_L_E_T_ = ' ' "
+				_cQuery += "     AND FP0.FP0_PROJET = FPZ.FPZ_PROJET "
+			EndIf
 
-_cQuery += "WHERE SC6.C6_FILIAL = ? AND SC6.C6_NOTA = ? AND "
-_cQuery += "SC6.D_E_L_E_T_=' ' "
+			_cQuery += "WHERE SC6.C6_FILIAL = ? AND SC6.C6_NOTA = ? AND "
+			_cQuery += "SC6.D_E_L_E_T_=' ' "
 
 			//Seta as variaveis da query
 			oStatement:SetQuery(_cquery)
@@ -986,176 +1004,233 @@ _cQuery += "SC6.D_E_L_E_T_=' ' "
 			EndIf
 			NLIN += 10 		// 311
 		CASE _CTIPO == "2" .or. _CTIPO == "3"
-		
-		//Adidionado por Raphael - HV - 30/04/2025
+
+			//Adidionado por Raphael - HV - 30/04/2025
 			ASort(_APRODUTOS,,,{|x,y| x[1]  < y[1] })
+			FOR I := 1 TO LEN(_APRODUTOS)
+				
+				cItem := STRZERO(I,3) //GABRIEL 
 
-			FOR I := 1 TO LEN(_APRODUTOS) //ALTERAR AGORA
-				OREPORT:SAY( NLIN-1, NMINLEFT+10, _APRODUTOS[I,1], OFONT2:OFONT )
+				OREPORT:SAY( NLIN-1, NMINLEFT+10, cItem, OFONT2:OFONT )
 				OREPORT:SAY( NLIN-1, NMINLEFT+40, AllTrim(_APRODUTOS[I,2])+"/"+AllTrim(_APRODUTOS[I,7]), OFONT2:OFONT )
-
 				OREPORT:SAY( NLIN-1, NMEIO-10, _APRODUTOS[I,6], OFONT2:OFONT )
-
 				OREPORT:SAY( NLIN-1, NMEIO+94, _APRODUTOS[I,3], OFONT2:OFONT )
 				OREPORT:SAY( NLIN-1,((NMEIO+NMAXWIDTH)/2)-23, _APRODUTOS[I,4], OFONT2:OFONT )
 				OREPORT:SAY( NLIN-1,((NMEIO+NMAXWIDTH)/2)+74, _APRODUTOS[I,5], OFONT2:OFONT )
-				NLIN += 10 	// 311
-//				IF NLIN > 800
-				IF NLIN > 750
+
+				NLIN += 10
+
+				IF NLIN > 800
 					OREPORT:ENDPAGE()
 					OREPORT:STARTPAGE()
 					NLIN := 25
+
 //---------------------------------------------------------------------------------------------------------------------
 
-		// --> CABEùALHO
-		OREPORT:BOX( NLIN, NMINLEFT, NLIN+50, NMAXWIDTH,"-1" )
-		NLIN +=  50 			// NLIN TOTAL:  75
+					// --> CABEùALHO
+					// OREPORT:BOX( NLIN, NMINLEFT, NLIN+50, NMAXWIDTH,"-1" )
+					NLIN +=  50 			// NLIN TOTAL:  75
 
-		// --> INFORMAùùES DO PRESTADOR DO SERVIùO
+					// --> INFORMA??ES DO PRESTADOR DO SERVI?O
 		OREPORT:BOX( NLIN, NMINLEFT, NLIN+90, NMEIO     )
 		OREPORT:BOX( NLIN, NMEIO   , NLIN+90, NMAXWIDTH )
 		NLIN += 105 			// NLIN TOTAL: 180
 
-		// --> INFORMAùùES DO TOMADOR DO SERVIùO
+		// --> INFORMA??ES DO TOMADOR DO SERVI?O
 		OREPORT:BOX( NLIN, NMINLEFT, NLIN+90, NMAXWIDTH )
 		NLIN += 102 			// NLIN TOTAL: 282
 
+		// --> SERVI?OS
+		//OREPORT:BOX( NLIN, NMINLEFT, NLIN+410, NMAXWIDTH )
 		NLIN += 420 			// NLIN TOTAL: 702
 
+		// FRANK 27/10/20
+		//OREPORT:BOX( NLIN, NMINLEFT, NLIN+85, NMINLEFT+85 )
+		//OREPORT:BOX( NLIN, NMINLEFT+85, NLIN+85, NMAXWIDTH )
+		// --> INICIA A IMPRESS?O DAS INFORMA??ES
 		NLIN :=  30
-
-		OREPORT:FILLRECT( {NLIN, NMINLEFT+3, NLIN+10,NMAXWIDTH }, OBRUSH)
+		OREPORT:SayBitmap( NLIN-30, NMINLEFT, cLogo,60,60)
+		// OREPORT:FILLRECT( {NLIN, NMINLEFT+3, NLIN+10,NMAXWIDTH }, OBRUSH)
 		NLIN +=  15 			// NLIN TOTAL: 45
 
-		// OREPORT:SAYBITMAP(NLIN-20,NMINLEFT+3,CLOGO)
-
-		OREPORT:FILLRECT( {NLIN, NMINLEFT+3, NLIN+10,NMAXWIDTH }, OBRUSH)
+		// OREPORT:FILLRECT( {NLIN, NMINLEFT+3, NLIN+10,NMAXWIDTH }, OBRUSH)
 		NLIN +=  15 			// NLIN TOTAL: 60
 
-		OREPORT:FILLRECT( {NLIN, NMINLEFT+3, NLIN+10,NMAXWIDTH }, OBRUSH)
+		// OREPORT:FILLRECT( {NLIN, NMINLEFT+3, NLIN+10,NMAXWIDTH }, OBRUSH)
 		NLIN :=  38
 
-		// OREPORT:SAYBITMAP(NLIN-20,NMINLEFT+3,CLOGO,0108,0060 )
+		// OREPORT:SAYBITMAP(NLIN-8,NMINLEFT+3,CLOGO,0098,0040 )
 
-		OREPORT:SAY( NLIN, NMEIO-(len(STR0005)/2)-20, STR0005, OFONT3:OFONT ) //"FATURA"
-/*
-
+		//OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)-20, STR0005, OFONT3:OFONT ) //"FATURA"
+		OREPORT:SAY( NLIN, NMEIO-(len(STR0005)/2), STR0005, OFONT3:OFONT ) //"FATURA"
+		
 
 		_CEMPRESA := ALLTRIM(SM0->M0_NOMECOM)
 		XT  := MLCOUNT(_CEMPRESA,30)
-		FOR I:=1 TO XT
-			OREPORT:SAY( NLIN, NMINLEFT+103, MEMOLINE(_CEMPRESA ,30, I ), OFONT4:OFONT )
+		FOR XT:=1 TO XT
+			// OREPORT:SAY( NLIN, NMINLEFT+103, MEMOLINE(_CEMPRESA ,30, I ), OFONT4:OFONT )
 			NLIN +=  15
-		NEXT I
+		NEXT XT
 
-
-*/
 		NLIN :=  53 			// NLIN TOTAL: 53
 
+		//OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)-22, TRBFAT->NUMFAT, OFONT3:OFONT )
 		OREPORT:SAY( NLIN, NMEIO- (len(alltrim(TRBFAT->NUMFAT))/2), alltrim(TRBFAT->NUMFAT), OFONT3:OFONT )
 		NLIN +=  40 			// NLIN TOTAL: 93
 
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDEREùO: "
-		OREPORT:SAY( NLIN, NMINLEFT+60, substr(CEND,1,51 ), OFONT2:OFONT )
-
-
-		OREPORT:SAY( NLIN, NMEIO+10, STR0007, OFONT1:OFONT ) //"NATUREZA OPERAùùO: "
-		OREPORT:SAY( NLIN, NMEIO+108, ALLTRIM(TRBFAT->F4_FINALID), OFONT2:OFONT )
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERE?O: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, substr(CEND,1,51 ), OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMINLEFT+10, "RAZ√O SOCIAL:", OFONT1:OFONT ) //"FONE: "
+		OREPORT:SAY( NLIN, NMINLEFT+75, CRAZAO, OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMEIO+10, "Natureza OP:", OFONT1:OFONT ) //"NATUREZA OPERA??O: "
+		OREPORT:SAY( NLIN, NMEIO+80, "LOCA«√O DE VEICULOS", OFONT2:OFONT ) // GABRIEL ( MUDADO DE F4_FINALID)
 		NLIN +=  15 			// NLIN TOTAL: 108
 
 		OREPORT:SAY( NLIN, NMINLEFT+10, STR0008, OFONT1:OFONT ) //"BAIRRO: "
+	//	OREPORT:SAY( NLIN, NMINLEFT+50, ALLTRIM(SM0->M0_BAIRCOB), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMINLEFT+50, substr(CBAIRRO,1,20), OFONT2:OFONT )
-
-		OREPORT:SAY( NLIN, NMEIO+30, STR0032, OFONT1:OFONT ) //STR0032 //"CONTRATO: "
-		OREPORT:SAY( NLIN, NMEIO+108, ALLTRIM(TRBFAT->FP0_XLOCAL), OFONT2:OFONT ) // GABRIEL 09042025
-		
 		OREPORT:SAY( NLIN, NMEIO+10, "PROJETO: ", OFONT1:OFONT ) //STR0032 //"PROJETO: "
-		OREPORT:SAY( NLIN, NMEIO+108, ALLTRIM(TRBFAT->FPZ_PROJET), OFONT2:OFONT ) // GABRIEL 
-	
+		OREPORT:SAY( NLIN, NMEIO+80, ALLTRIM(TRBFAT->FPZ_PROJET), OFONT2:OFONT )
+		
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0009, OFONT1:OFONT ) //"CIDADE: "
+	//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, ALLTRIM(SM0->M0_CIDCOB), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+35, substr(CCIDADE,1,24), OFONT2:OFONT )
 
 		NLIN +=  15 			// NLIN TOTAL: 123
 
+	//	_CVAR := SUBSTR(SM0->M0_CEPCOB,1,5) + '-' + SUBSTR(SM0->M0_CEPCOB,6,3)
 		OREPORT:SAY( NLIN, NMINLEFT+10, STR0010, OFONT1:OFONT ) //"CEP: "
-		OREPORT:SAY(NLIN, NMINLEFT+50, TRANSFORM(CCEP, "@!R NNNNN-NNN"), OFONT2:OFONT) // ALTERADO 22042025 GABRIEL
-
+	//	OREPORT:SAY( NLIN, NMINLEFT+50, _CVAR, OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMINLEFT+50, CCEP, OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMEIO+10, "CONTRATO", OFONT1:OFONT ) //STR0032 //"CONTRATO: "
+		OREPORT:SAY( NLIN, NMEIO+80, ALLTRIM(TRBFAT->FP0_XLOCAL), OFONT2:OFONT ) // GABRIEL   -- CERTO
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0011, OFONT1:OFONT ) //"UF: "
+	//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, ALLTRIM(SM0->M0_ESTCOB), OFONT2:OFONT )
 		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CUF, OFONT2:OFONT )
 		NLIN +=  15 			// NLIN TOTAL: 138
 
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0012, OFONT1:OFONT ) //"FONE: "
-		OREPORT:SAY(NLIN, NMINLEFT+50, TRANSFORM(CTEL, "@R (99) 9999-9999"), OFONT2:OFONT)// ALTERADO 22042025 GABRIEL
+	//	_CVAR := "(" + SUBSTR(SM0->M0_TEL,4,2) + ") " + SUBSTR(SM0->M0_TEL,7,4) + "-" + SUBSTR(SM0->M0_TEL,11,4)
+		// OREPORT:SAY( NLIN, NMINLEFT+10, "RAZ√O:", OFONT1:OFONT ) //"FONE: "
+		// OREPORT:SAY( NLIN, NMINLEFT+50, CRAZAO, OFONT2:OFONT )
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERE?O: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, substr(CEND,1,51 ), OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0013, OFONT1:OFONT ) //"FAX: "
-		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CFAX, OFONT2:OFONT )
-
-		OREPORT:SAY( NLIN, NMEIO+10, STR0014, OFONT1:OFONT ) //"DATA EMISSùO: "
-		OREPORT:SAY( NLIN, NMEIO+80, DTOC(STOD(TRBFAT->EMISSAO)), OFONT2:OFONT )
-		NLIN +=  15 			// NLIN TOTAL: 153
+		/*
+		IF EMPTY(ALLTRIM(SM0->M0_FAX))
+			_CVAR := ""
+		ELSE
+			_CVAR := "(" + SUBSTR(SM0->M0_FAX,4,2) + ") " + SUBSTR(SM0->M0_FAX,7,4) + "-" + SUBSTR(SM0->M0_FAX,11,4)
+		ENDIF
+		*/
+		// OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0012, OFONT1:OFONT ) //"FAX: "
+	//	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, _CVAR, OFONT2:OFONT ) gabriel
+		// OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CTEL, OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+	//	OREPORT:SAY( NLIN, NMINLEFT+50, _CVAR, OFONT2:OFONT )
 		OREPORT:SAY( NLIN, NMINLEFT+50, CCNPJ, OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0016, OFONT1:OFONT ) //"CCM: "
-		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, ALLTRIM(SM0->M0_INSCM), OFONT2:OFONT )
+		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0012, OFONT1:OFONT ) //"CCM: "
+		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CTEL, OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMEIO+10, STR0014, OFONT1:OFONT ) //"DATA EMISS?O: " //emiss„o
+		OREPORT:SAY( NLIN, NMEIO+80, DTOC(STOD(TRBFAT->EMISSAO)), OFONT2:OFONT )
+		OREPORT:SAY( NLIN, NMEIO+160, STR0022, OFONT1:OFONT ) //"VENCTO: "  // gabriel
+		OREPORT:SAY( NLIN, NMEIO+200, DTOC(STOD(TRBFAT->VENCTO)), OFONT2:OFONT )
+		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0012, OFONT1:OFONT ) //"CCM: "
+		OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CTEL, OFONT2:OFONT )
+		NLIN +=  15 			// NLIN TOTAL: 153
+		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERE?O: "
+		OREPORT:SAY( NLIN, NMINLEFT+60, substr(CEND,1,51 ), OFONT2:OFONT )
+		/*
+		_CVAR := SUBSTR(SM0->M0_CGC,1,2) + "." + SUBSTR(SM0->M0_CGC,3,3) + "." + SUBSTR(SM0->M0_CGC,6,3) + "/" +;
+				SUBSTR(SM0->M0_CGC,9,4) + "-" + SUBSTR(SM0->M0_CGC,13,2)
+		*/
+	// 	OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+	// //	OREPORT:SAY( NLIN, NMINLEFT+50, _CVAR, OFONT2:OFONT )
+	// 	OREPORT:SAY( NLIN, NMINLEFT+50, CCNPJ, OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, NMEIO+10, STR0017, OFONT1:OFONT ) //"NùMERO PEDIDO: "
+	// 	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2), STR0012, OFONT1:OFONT ) //"CCM: "
+	// 	OREPORT:SAY( NLIN, ((NMINLEFT+NMEIO)/2)+30, CTEL, OFONT2:OFONT )
+
+		OREPORT:SAY( NLIN, NMEIO+10, STR0017, OFONT1:OFONT ) //"N?MERO PEDIDO: "
 		OREPORT:SAY( NLIN, NMEIO+80, TRBFAT->PEDIDO, OFONT2:OFONT )
 		NLIN +=  25 			// NLIN TOTAL: 178
+		
 
-		OREPORT:FILLRECT( {NLIN-10, 0010, NLIN,NMAXWIDTH }, OBRUSH)
-		OREPORT:SAY( NLIN-1, NMEIO-30, "STR0018", OFONT3:OFONT ) //"DESTINATùRIO"
+		// OREPORT:FILLRECT( {NLIN-10, 0010, NLIN,NMAXWIDTH }, OBRUSH) //GABRIEL
+		OREPORT:SAY( NLIN-1, NMEIO-30, STR0018, OFONT3:OFONT ) //"DESTINAT?RIO"
 		NLIN +=  18 			// NLIN TOTAL: 196
 
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0019, OFONT1:OFONT ) //"RAZùO SOCIAL: "
+		OREPORT:SAY( NLIN, NMINLEFT+10, STR0019, OFONT1:OFONT ) //"RAZAO SOCIAL: "
 		OREPORT:SAY( NLIN, NMINLEFT+75, ALLTRIM(TRBFAT->RAZSOC), OFONT2:OFONT )
 		NLIN +=  15 			// NLIN TOTAL: 211
 
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDEREùO: "
-		OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
-		NLIN +=  15 			// NLIN TOTAL: 226
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERE?O: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
 
 		OREPORT:SAY( NLIN, NMINLEFT+10, STR0008, OFONT1:OFONT ) //"BAIRRO: "
 		OREPORT:SAY( NLIN, NMINLEFT+50, substr(TRBFAT->A1_BAIRRO,1,35), OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, NMEIO-80, STR0020, OFONT1:OFONT ) //"MUNICùPIO: "
+		OREPORT:SAY( NLIN, NMEIO-80, STR0020, OFONT1:OFONT ) //"MUNIC?PIO: "
 		OREPORT:SAY( NLIN, NMEIO-26, substr(TRBFAT->A1_MUN,1,38), OFONT2:OFONT )
 
 		OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2), STR0011, OFONT1:OFONT ) //"UF: "
 		OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+20, ALLTRIM(TRBFAT->A1_EST), OFONT2:OFONT )
 
 		OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+60, STR0010, OFONT1:OFONT ) //"CEP: "
-		OREPORT:SAY(NLIN, ((NMEIO+NMAXWIDTH)/2)+80, TRANSFORM(ALLTRIM(TRBFAT->A1_CEP), "@R 9999-999"), OFONT2:OFONT) // ALTERADO 22042025
-		NLIN +=  15 			// NLIN TOTAL: 241
-
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+		
+		OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+80, TRANSFORM(ALLTRIM(TRBFAT->A1_CEP),"@R 99999-999"), OFONT2:OFONT )
+		NLIN +=  15 			// NLIN TOTAL: 226
+OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
 		OREPORT:SAY( NLIN, NMINLEFT+60, Alltrim(Transform(TRBFAT->A1_CGC, "@!R NN.NNN.NNN/NNNN-99")), OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, NMEIO-80, STR0021, OFONT1:OFONT ) //"INSCRIùùO ESTADUAL: "
+		OREPORT:SAY( NLIN, NMEIO-80, STR0021, OFONT1:OFONT ) //"INSCRI??O ESTADUAL: "
 		OREPORT:SAY( NLIN, NMEIO+15, ALLTRIM(TRBFAT->A1_INSCR), OFONT2:OFONT )
-		NLIN +=  15 			// NLIN TOTAL: 256
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERECO: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
 
-		OREPORT:SAY( NLIN, NMINLEFT+10, STR0022, OFONT1:OFONT ) //"VENCTO: "
-		OREPORT:SAY( NLIN, NMINLEFT+60, DTOC(STOD(TRBFAT->VENCTO)), OFONT2:OFONT )
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0008, OFONT1:OFONT ) //"BAIRRO: "
+		// OREPORT:SAY( NLIN, NMINLEFT+50, substr(TRBFAT->A1_BAIRRO,1,35), OFONT2:OFONT )
+
+		// OREPORT:SAY( NLIN, NMEIO-80, STR0020, OFONT1:OFONT ) //"MUNIC?PIO: "
+		// OREPORT:SAY( NLIN, NMEIO-26, substr(TRBFAT->A1_MUN,1,38), OFONT2:OFONT )
+
+		// OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2), STR0011, OFONT1:OFONT ) //"UF: "
+		// OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+20, ALLTRIM(TRBFAT->A1_EST), OFONT2:OFONT )
+
+		// OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+60, STR0010, OFONT1:OFONT ) //"CEP: "
+		
+		// OREPORT:SAY( NLIN, ((NMEIO+NMAXWIDTH)/2)+80, TRANSFORM(ALLTRIM(TRBFAT->A1_CEP),"@R 99999-999"), OFONT2:OFONT )
+		NLIN +=  15 			// NLIN TOTAL: 241
+		OREPORT:SAY( NLIN, NMINLEFT+10, STR0006, OFONT1:OFONT ) //"ENDERECO: "
+		OREPORT:SAY( NLIN, NMINLEFT+60, ALLTRIM(TRBFAT->A1_END), OFONT2:OFONT )
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0015, OFONT1:OFONT ) //"CNPJ: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, Alltrim(Transform(TRBFAT->A1_CGC, "@!R NN.NNN.NNN/NNNN-99")), OFONT2:OFONT )
+
+		// OREPORT:SAY( NLIN, NMEIO-80, STR0021, OFONT1:OFONT ) //"INSCRI??O ESTADUAL: "
+		// OREPORT:SAY( NLIN, NMEIO+15, ALLTRIM(TRBFAT->A1_INSCR), OFONT2:OFONT )
+		// NLIN +=  15 			// NLIN TOTAL: 256 //ALTERE
+
+		// OREPORT:SAY( NLIN, NMINLEFT+10, STR0022, OFONT1:OFONT ) //"VENCTO: "
+		// OREPORT:SAY( NLIN, NMINLEFT+60, DTOC(STOD(TRBFAT->VENCTO)), OFONT2:OFONT )
 	//	OREPORT:SAY( NLIN, NMINLEFT+100, TRANSFORM(TRBFAT->F2_VALBRUT,"@E 9,999,999,999.99"), OFONT2:OFONT ) COMENTADO POR GUILHERME CORONADO
 		NLIN +=  25 			// NLIN TOTAL: 281
 
-		OREPORT:FILLRECT( {NLIN-10, 0010, NLIN,NMAXWIDTH }, OBRUSH)
+					OREPORT:FILLRECT( {NLIN-10, 0010, NLIN,NMAXWIDTH }, OBRUSH)
 
-		IF _CTIPO == "2"
-			OREPORT:SAY( NLIN-2, NMINLEFT+10, STR0023, OFONT1:OFONT ) //"ITEM"
-			OREPORT:SAY( NLIN-2, NMINLEFT+40, "DISCRIMINA«√O/PLACA", OFONT1:OFONT )	 //"DESCRIMINAùùO/ESPECIFICAùùO"
+					IF _CTIPO == "2"
+						OREPORT:SAY( NLIN-2, NMINLEFT+10, STR0023, OFONT1:OFONT ) //"ITEM"
+						OREPORT:SAY( NLIN-2, NMINLEFT+40, "DISCRIMINA«√O/PLACA", OFONT1:OFONT )	 //"DESCRIMINAùùO/ESPECIFICAùùO"
 
-			OREPORT:SAY( NLIN-2, NMEIO-10, STR0025, OFONT1:OFONT ) //"PERùODO"
+						OREPORT:SAY( NLIN-2, NMEIO-10, STR0025, OFONT1:OFONT ) //"PERùODO"
 
-			OREPORT:SAY( NLIN-2, NMEIO+94, STR0026, OFONT1:OFONT ) //"QTD."
-			OREPORT:SAY( NLIN-2,((NMEIO+NMAXWIDTH)/2)-20, STR0027, OFONT1:OFONT ) //"PREùO UNITùRIO"
-			OREPORT:SAY( NLIN-2,((NMEIO+NMAXWIDTH)/2)+90, STR0028, OFONT1:OFONT ) //"PREùO TOTAL"
+						OREPORT:SAY( NLIN-2, NMEIO+94, STR0026, OFONT1:OFONT ) //"QTD."
+						OREPORT:SAY( NLIN-2,((NMEIO+NMAXWIDTH)/2)-20, STR0027, OFONT1:OFONT ) //"PREùO UNITùRIO"
+						OREPORT:SAY( NLIN-2,((NMEIO+NMAXWIDTH)/2)+90, STR0028, OFONT1:OFONT ) //"PREùO TOTAL"
 //		ELSE
 //			OREPORT:SAY( NLIN-2, NMINLEFT+10, "DISCRIMINA«√O/PLACA", OFONT1:OFONT )	 //"DESCRIMINAùùO/ESPECIFICAùùO"
 
-		ENDIF
-		NLIN +=  15 		// 296
+					ENDIF
+					NLIN +=  15 		// 296
 
 //---------------------------------------------------------------------------------------------------------------------
 				ENDIF
@@ -1177,147 +1252,12 @@ _cQuery += "SC6.D_E_L_E_T_=' ' "
 		// 2. Completar com o conteùdo do MV_CMPUSR
 		// a cada FP1 e conteùdo do parùmetro pular linha chr(13)+chr(10)
 		//--------------------------------------------------------------------------------
-		// GABRIEL CALCULO ALIQUITAS 
+		
 		
 	lQuery		:= .T.
 			cAliasSF3	:= GetNextAlias()
 
-			//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-			//≥Verifica se imprime ou nao os documentos cancelados≥
-			//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-
-// 			cSelect:= "%"
-// 			cSelect+= "F2_FILIAL,F2_EMISSAO,F2_DOC,F2_SERIE,"
-// 			cSelect+= IIF(SerieNfId("SF2",3,"F2_SERIE")<>"F2_SERIE","F2_SDOC,","") + "F2_CLIENTE,"
-// 			cSelect+= "F2_LOJA,F2_BASEISS,F2_VALBRUT,F2_TIPO,F2_VALISS,F2_ESPECIE,"
-// 			cSelect+= "D2_CODISS,F2_NFELETR,F2_EMINFE,F2_CODNFE,F2_CREDNFE "+cCampos
-// 			cSelect+= "%"
-
-// 			BeginSql Alias cAliasSF3
-// 			COLUMN F2_EMISSAO AS DATE
-// 			COLUMN F2_EMINFE AS DATE
-// 			SELECT %Exp:cSelect%
-
-// 			FROM %table:SF2% SF2 INNER JOIN %table:SD2% SD2 
-// 			ON  SF2.F2_FILIAL   = SD2.D2_FILIAL        
-// 			AND SF2.F2_DOC      = SD2.D2_DOC      
-// 			AND SF2.F2_SERIE    = SD2.D2_SERIE      
-// 			AND SF2.F2_TIPO     = SD2.D2_TIPO      
-// 			AND SF2.F2_CLIENTE  = SD2.D2_CLIENTE      
-// 			AND SF2.F2_LOJA     = SD2.D2_LOJA  
-// 			AND SD2.%NotDel%    
-
-// 			WHERE SF2.F2_FILIAL = %xFilial:SF2% AND
-// 				SD2.D2_CF >= '5' AND
-// 				SF2.F2_EMISSAO >= %Exp:mv_par01% AND
-// 				SF2.F2_EMISSAO <= %Exp:mv_par02% AND
-// 				SF2.F2_TIPO = 'N' AND
-// 				// SD2.D2_CODISS <> %Exp:Space(TamSX3("D2_CODISS")[1])% AND
-// 				SF2.F2_CLIENTE >= %Exp:mv_par03% AND
-// 				SF2.F2_CLIENTE <= %Exp:mv_par04% AND
-// 				SF2.F2_DOC     >= %Exp:mv_par05% AND
-// 				SF2.F2_DOC     <= %Exp:mv_par06% AND
-// 				// %Exp:cQuery%
-// 				SF2.%NotDel%
-
-// 			ORDER BY SF2.F2_EMISSAO,SF2.F2_SERIE,SF2.F2_DOC,SF2.F2_TIPO,SF2.F2_CLIENTE,SF2.F2_LOJA
-// 			EndSql
-
-// 			dbSelectArea(cAliasSF3)
-// 		Else
-
-// 		#ENDIF
-// 		cArqInd := CriaTrab(NIL,.F.)
-// 		cChave  := "DTOS(F2_EMISSAO)+F2_SERIE+F2_DOC+F2_TIPO+F2_CLIENTE+F2_LOJA"
-// 		cFiltro := "F2_FILIAL == '" + xFilial("SF2") + "' .And. "
-// 		cFiltro += "D2_CF >= '5" + SPACE(LEN(D2_CF)-1) + "' .And. "
-// 		cFiltro += "DtOs(F2_EMISSAO) >= '" + Dtos(mv_par01) + "' .And. "
-// 		cFiltro += "DtOs(F2_EMISSAO) <= '" + Dtos(mv_par02) + "' .And. "
-// 		// cFiltro += "F2_TIPO == 'N' .And. D2_CODISS <> '" + Space(Len(D2_CODISS)) + "' .And. "
-// 		cFiltro += "F2_TIPO == 'N' .And. "
-// 		cFiltro += "F2_CLIENTE >= '" + mv_par03 + "' .And. F2_CLIENTE <= '" + mv_par04 + "' .And. "
-// 		cFiltro += "F2_DOC >= '" + mv_par05 + "' .And. F2_DOC <= '" + mv_par06 + "'"
-// 		//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-// 		//≥Verifica se imprime ou nao os documentos cancelados≥
-// 		//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-
-// 		IndRegua(cAliasSF3,cArqInd,cChave,,cFiltro,STR0006)  //"Selecionando Registros..."
-// 		#IFNDEF TOP
-// 			DbSetIndex(cArqInd+OrdBagExt())
-// 		#ENDIF
-// 		(cAliasSF3)->(dbGotop())
-// 		SetRegua(LastRec())
-
-// 		#IFDEF TOP
-// 		Endif
-// 	#ENDIF
-
-// If  cKey <> (cAliasSF3)->F2_DOC+(cAliasSF3)->F2_SERIE+(cAliasSF3)->F2_CLIENTE+(cAliasSF3)->F2_LOJA .Or. ((cAliasSF3)->(Eof()))
-// 				//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-// 				//≥Obtendo os Valores de PIS/COFINS/CSLL/IR/INSS da NF de saida                             ≥
-// 				//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-// 				SF2->(dbSetOrder(1))
-// 				If SF2->(dbSeek(xFilial("SF2")+cKey))
-// 					If (SF2->F2_VALPIS + SF2->F2_VALCOFI + SF2->F2_VALCSLL) <= nMinPCC
-// 						nValPis  := 0
-// 						nValCof  := 0
-// 						nValCSLL := 0
-// 					Else
-// 						nValPis  := SF2->F2_VALPIS
-// 						nValCof  := SF2->F2_VALCOFI
-// 						nValCSLL := SF2->F2_VALCSLL
-// 					EndIf
-// 					nValINSS := IIf((SF2->F2_VALINSS <= nMinPCC),0,SF2->F2_VALINSS)
-// 					nValIR   := IIf((SF2->F2_VALIRRF <= nMinPCC),0,SF2->F2_VALIRRF)
-// 				Endif
-// 				//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
-// 				//≥Obtendo as aliquotas de PIS/COFINS/CSLL/IR/INSS atraves da natureza da NF de saida       ≥
-// 				//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
-// 				SE1->(dbSetOrder(2))
-// 				If SE1->(dbSeek(xFilial("SE1")+cF2_CLIENTE+cF2_LOJA+cF2_SERIE+cF2_DOC))
-// 					While SE1->(!Eof()) .And. SE1->E1_FILIAL+SE1->E1_CLIENTE+SE1->E1_LOJA+SE1->E1_PREFIXO+SE1->E1_NUM == xFilial("SF3")+cF2_CLIENTE+cF2_LOJA+cF2_SERIE+cF2_DOC
-// 						If SE1->E1_TIPO == MVNOTAFIS
-// 							cNatureza := SE1->E1_NATUREZ
-// 							Exit
-// 						EndIf
-// 						SE1->(dbSKip())
-// 					EndDo
-// 					SED->(dbSetOrder(1))
-// 					If SED->(dbSeek(xFilial("SDE")+cNatureza))
-// 						nAliqPis  := Iif( nValPis  > 0 , Iif( SED->ED_PERCPIS > 0 , SED->ED_PERCPIS , cMVTXPIS) , 0 )
-// 						nAliqCof  := Iif( nValCof  > 0 , Iif( SED->ED_PERCCOF > 0 , SED->ED_PERCCOF , cMVTXCOF) , 0 )
-// 						nALiqINSS := Iif( nValINSS > 0 , SED->ED_PERCINS , 0 )
-// 						nAliqIR   := Iif( nValIR   > 0 , Iif( SED->ED_PERCIRF > 0 , SED->ED_PERCIRF , cMVALIRF) , 0 )
-// 						nALiqCSLL := Iif( nValCSLL > 0 , Iif( SED->ED_PERCCSL > 0 , SED->ED_PERCCSL , cMVTXCSLL) , 0 )
-// 					EndIf
-// 				Else
-// 					nAliqPis  := Iif( nValPis  > 0 ,cMVTXPIS  , 0 )
-// 					nAliqCof  := Iif( nValCof  > 0 ,cMVTXCOF  , 0 )
-// 					nAliqIR   := Iif( nValIR   > 0 ,cMVALIRF  , 0 )
-// 					nALiqCSLL := Iif( nValCSLL > 0 ,cMVTXCSLL , 0 )
-// 				EndIf
-
-// 				aItensSD2 := {}
-// 				SD2->(dbSetOrder(3))
-// 				SB1->(dbSetOrder(1))
-// 				If SD2->(dbSeek(xFilial("SD2")+cKey))
-// 					Do While SD2->(!Eof()) .And. SD2->D2_FILIAL+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA == xFilial("SD2")+cKey
-// 						SB1->(MsSeek(xFilial("SB1")+SD2->D2_COD))
-// 						aAdd(aItensSD2,{SD2->D2_ITEM,SB1->B1_DESC,SD2->D2_QUANT,SD2->D2_PRCVEN,SD2->D2_TOTAL})
-// 						SD2->(dbSkip())
-// 					EndDo
-// 				Endif
-
-// 				ASort(aItensSD2,,,{|x,y| x[1]  < y[1] })
-
-
-
-
-
-
-
-
-		//--------------------------------------------------------------------------------
+		
 		_cObsFat := ""
 		SC6->(dbSetOrder(1))
 		aObra := {}
@@ -1392,7 +1332,7 @@ _cQuery += "SC6.D_E_L_E_T_=' ' "
 		_cObsFat += chr(13)+chr(10)
 
 		XT  := MLCOUNT(ALLTRIM(_COBSFAT),90)
-		FOR I:=1 TO XT
+		FOR W :=1 TO XT
 			OREPORT:SAY( NLIN-1, NMINLEFT+10, MEMOLINE(_COBSFAT ,90, I ), OFONT2:OFONT )
 			NLIN +=  10
 		NEXT
@@ -1514,13 +1454,13 @@ RETURN
 ùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùù
 */
 STATIC FUNCTION PERGPARAM(CPERG)
-LOCAL APERGS  := {}
-LOCAL _CNOTAI := IIF(FIELDPOS("F2_DOC")>0	,SPACE(GETSX3CACHE("F2_DOC","X3_TAMANHO"))			,SPACE(09)			)
-LOCAL _CNOTAF := IIF(FIELDPOS("F2_DOC")>0	,REPLICATE("Z",GETSX3CACHE("F2_DOC","X3_TAMANHO"))	,REPLICATE("Z",09)	)
-LOCAL _CSERIE := IIF(FIELDPOS("F2_SERIE")>0	,SPACE(GETSX3CACHE("F2_SERIE","X3_TAMANHO"))		,SPACE(03)			)
-LOCAL _CFILIAL:= SPACE(Len(cFilAnt))
-LOCAL ARET    := {}
-LOCAL LRET    := .F.
+	LOCAL APERGS  := {}
+	LOCAL _CNOTAI := IIF(FIELDPOS("F2_DOC")>0	,SPACE(GETSX3CACHE("F2_DOC","X3_TAMANHO"))			,SPACE(09)			)
+	LOCAL _CNOTAF := IIF(FIELDPOS("F2_DOC")>0	,REPLICATE("Z",GETSX3CACHE("F2_DOC","X3_TAMANHO"))	,REPLICATE("Z",09)	)
+	LOCAL _CSERIE := IIF(FIELDPOS("F2_SERIE")>0	,SPACE(GETSX3CACHE("F2_SERIE","X3_TAMANHO"))		,SPACE(03)			)
+	LOCAL _CFILIAL:= SPACE(Len(cFilAnt))
+	LOCAL ARET    := {}
+	LOCAL LRET    := .F.
 
 	AADD( APERGS ,{1,STR0047	,_CNOTAI ,"@!",".T.","SF2"  ,".T.", 50,.F.}) //"NOTA FISCAL DE: "
 	AADD( APERGS ,{1,STR0048	,_CNOTAF ,"@!",".T.","SF2"  ,".T.", 50,.F.}) //"NOTA FISCAL ATù: "
@@ -1545,11 +1485,11 @@ RETURN (LRET)
 /*/
 
 STATIC Function LOCR00101(cCodFil, lHelp)
-Local lRet      := .F.
-Local aLoadSm0	:= FWLoadSM0()
-Local nPosFil	:= aScan(aLoadSm0, {|x| x[2] == cCodFil })
+	Local lRet      := .F.
+	Local aLoadSm0	:= FWLoadSM0()
+	Local nPosFil	:= aScan(aLoadSm0, {|x| x[2] == cCodFil })
 
-Default lHelp	:= .F.
+	Default lHelp	:= .F.
 
 	//se localizou a filial informada
 	If nPosFil > 0
