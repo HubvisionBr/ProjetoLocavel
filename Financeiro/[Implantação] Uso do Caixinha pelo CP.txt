@@ -1,0 +1,14 @@
+Implantação do uso do Caixinha pelo Contas a Pagar
+
+1) Pagamento de NF via Caixinha
+- Criar parâmetro para informar os motivos de baixa que são de caixinha MV_XMTCX1 caractere
+2) Criar motivo de baixa que não movimenta banco e colocar no parâmetro anterior
+022 - CX1 - BX CAIXINH
+3) Preencher o parâmetro MV_XMTCX1 com a descrição dos motivos de baixa -> Ex: BX CAIXINH;DACAO;TROCO
+4) Criar PE para não permitir usar bancos (SA6) diferentes do que está no caixinha (SET) quando for o motivo de baixa do parâmetro
+Compilar -> FA080TIT
+5) Criar PE para no momento da baixa, fazer um movimento no caixinha (https://tdn.totvs.com/display/public/PROT/FIN0001_CXA_Rotina_automatica_FINA560)
+Compilar -> F456AUT
+6) Criar um PE para no estorno da baixa, estornar o movimento do caixinha
+Compilar -> FA080CAN
+7) criar campo E2_XNUMCX c10
