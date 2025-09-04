@@ -1,0 +1,93 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
+#Include "Tlpp-core.th"
+
+User Function BIN_LOTE()
+    Local aParam        := {}
+    Local aRet          := {}
+    Local lOk
+    Private cFilialDe   := space(TamSx3("N1_FILIAL")[1])
+    Private cFilialAte  := Replicate("Z",TamSx3("N1_FILIAL")[1])
+    Private cChassiDe   := space(TamSx3("N1_CHASSIS")[1])
+    Private cChassiAte  := Replicate("Z",TamSx3("N1_CHASSIS")[1])
+    Private cPlacaDe    := space(TamSx3("N1_CHAPA")[1])
+    Private cPlacaAte   := Replicate("Z",TamSx3("N1_CHAPA")[1])
+
+    // Define os parâmetros
+    aAdd(aParam, {1, "Filial De",    cFilialDe,  "", ".T.", "SM0", ".T.", 80, .F.})
+    aAdd(aParam, {1, "Filial Até",   cFilialAte, "", ".T.", "SM0", ".T.", 80, .F.})
+    aAdd(aParam, {1, "Chassi De",    cChassiDe,  "", ".T.", "", ".T.", 80, .F.})
+    aAdd(aParam, {1, "Chassi Até",   cChassiAte, "", ".T.", "", ".T.", 80, .F.})
+    aAdd(aParam, {1, "Placa De",     cPlacaDe,   "", ".T.", "", ".T.", 80, .F.})
+    aAdd(aParam, {1, "Placa Até",    cPlacaAte,  "", ".T.", "", ".T.", 80, .F.})
+
+    lOk := ParamBox(aParam, "Filtros para Pesquisa de Veículos",@aRet)
+
+    If lOk
+        // Recupera os parâmetros
+        cFilialDe  := aRet[1]
+        cFilialAte := aRet[2]
+        cChassiDe  := aRet[3]
+        cChassiAte := aRet[4]
+        cPlacaDe   := aRet[5]
+        cPlacaAte  := aRet[6]
+        Processa({|| processarVeiculos(aParam)}, "Processando...")
+    EndIf
+Return
+
+Static Function processarVeiculos(aParam)
+    Local cAliasSN1 := GetNextAlias()
+    Local nAtual := 0
+    Local nTotal := 0
+    Local nCount := 0
+
+    If Select(cAliasSN1) <> 0
+        (cAliasSN1)->(DbCloseArea())
+    EndIf
+
+    // Monta a query com os filtros informados
+    BeginSql alias cAliasSN1
+    %noparser%
+        SELECT N1_CBASE, N1_ITEM
+        FROM %Table:SN1% SN1
+        WHERE N1_FILIAL BETWEEN %Exp:cFilialDe% AND %Exp:cFilialAte%
+          AND N1_CHASSIS BETWEEN %Exp:cChassiDe% AND %Exp:cChassiAte%
+          AND N1_CHAPA   BETWEEN %Exp:cPlacaDe%  AND %Exp:cPlacaAte%
+          AND N1_XATUOK <> %Exp:"S"%
+          AND SN1.%notDel%
+    EndSql
+
+    Count To nTotal
+    ProcRegua(nTotal)
+
+    (cAliasSN1)->(DbGoTop())
+
+    If (cAliasSN1)->(!EOF())
+        While (cAliasSN1)->(!EOF()) .and. nCount < 5
+            nAtual++
+            IncProc("Processando veiculo " + cValToChar(nAtual) + " de " + cValToChar(nTotal) + "...")
+            nCount++
+            SN1->(DbSetOrder(1))
+            If SN1->(DbSeek(xFilial('SN1')+PADR((cAliasSN1)->N1_CBASE,TamSx3("N1_CBASE")[1])+PADR((cAliasSN1)->N1_ITEM,TamSx3("N1_ITEM")[1])))
+                U_EnvioBin(SN1->N1_CHAPA,.T.)
+            EndIf
+            (cAliasSN1)->(DbSkip())
+        EndDo
+        MsgInfo("Pesquisa de veiculos finalizada.")
+    Else
+        MsgAlert("Não existem veiculos para pesquisa.")
+    EndIf
+    (cAliasSN1)->(DbCloseArea())
+Return
+

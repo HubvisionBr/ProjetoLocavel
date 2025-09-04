@@ -1,0 +1,149 @@
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include 'tlpp-core.th'
+/*
+#---------------------------------------------------------------#
+| Programa:| NP3LIB                             Data:23/12/2023 |
+|---------------------------------------------------------------|
+| Autor:   | NP3 Tecnologia                                     |
+|---------------------------------------------------------------|
+| Objetivo:|Classe de callback do umov para o protheus.         |
+|---------------------------------------------------------------|
+|                        ALTERAÇÃES                             |
+|---------------------------------------------------------------|
+|     Analista      |   Data     |  Motivo                      |
+|---------------------------------------------------------------|
+|                   |            |                              |
+|                   |            |                              |
+#---------------------------------------------------------------#
+LINK TDN: ** NÃO TEM **
+*/
+
+CLASS NP3CALLBACK
+    PRIVATE DATA cJson as Character
+    PRIVATE DATA cNum as Character
+    PRIVATE DATA cError as Character
+    PRIVATE DATA aDados as Array
+    PUBLIC METHOD New(cJson) Constructor
+    PUBLIC METHOD Create()
+    PUBLIC METHOD GetHistory()
+    PUBLIC METHOD ArrayHistory() 
+    PUBLIC METHOD GetError()
+ENDCLASS
+
+// Construtor
+METHOD New(cJson) Class NP3CALLBACK
+    Local cNum := "" 
+    Default cJson := ""
+    conout("-------------------------------->>>>>>>>>>>>>>>>>>>>>>>>CALLBACK-NEW")
+    // Inicia as variaveis
+    ::cError := ""
+    ::aDados := {}
+    ::cJson := cJson
+    // Trta a varivael cNum
+    If !Empty(cJson)
+        cNum := GetSXENum("ZZA","ZZA_SEQUEN")
+        DbSelectArea("ZZA")
+        ZZA->(DbSetOrder(1))//ZZA_FILIAL+ZZA_SEQUEN
+        If ZZA->(Dbseek(xFilial("ZZA")+PADR(cNum,TamSx3("ZZA_SEQUEN")[1])))
+            ConfirmSx8()
+            while .t.
+                cNum := GETSXENUM("ZZA","ZZA_SEQUEN")
+                If ZZA->(Dbseek(xFilial("ZZA")+PADR(cNum,TamSx3("ZZA_SEQUEN")[1])))
+                    ConfirmSx8()
+                Else
+                    exit
+                EndIf
+            EndDo
+        EndIf
+        ::cNum := cNum
+    EndIf
+Return
+
+// Cria CallBack
+METHOD Create() Class NP3CALLBACK
+    Local lRet := .f.
+    conout("-------------------------------->>>>>>>>>>>>>>>>>>>>>>>>CALLBACK-CREATE")
+    DbSelectArea("ZZA")
+    If RecLock("ZZA",.T.)
+        ZZA->ZZA_FILIAL := xFilial("ZZA")
+        ZZA->ZZA_SEQUEN := ::cNum
+        ZZA->ZZA_JSONP  := ::cJson
+        ZZA->ZZA_STATUS := "1"
+        ZZA->(MsUnlock())
+        ZZA->(DbCloseArea())
+        lRet := .t.
+        ConOut(::cJson)
+    Else
+        ::cError := "Ocorreu um erro ao tentar gravar o callback no Protheus"
+    EndIf
+Return lRet
+
+// Retornor o history da atividade
+METHOD GetHistory() Class NP3CALLBACK
+    Local lRet := .f.
+    DbSelectArea("ZZA")
+    ZZA->(DbSetOrder(1))//ZZA_FILIAL+ZZA_SEQUEN
+    If ZZA->(DbSeek(xFilial("ZZA")))
+        While ZZA->(!EOF()) 
+            If ZZA->ZZA_STATUS == '1'
+                oRetUmov := NP3RETUMOV():New()
+                If oRetUmov:RetId(ZZA->ZZA_JSONP)
+                    If oRetUmov:Process()
+                        If RecLock('ZZA',.f.)
+                            ZZA->ZZA_JSONG := oRetUmov:GetRetGet()
+                            ZZA->ZZA_STATUS := "2"
+                            ZZA->(MsUnlock())
+                            lRet := .t.
+                        EndIf
+                    Else
+                        ::cError := oRetUmov:GetError()
+                    EndIF
+                EndIF
+                FreeObj(oRetUmov)
+            EndIf
+            ZZA->(DbSkip())
+        EndDo
+    EndIf
+Return lRet
+
+// Trata o History para uma varival manipulavel
+METHOD ArrayHistory() Class NP3CALLBACK
+    Local lRet := .F.
+    Local oRetUmov
+    Local oGrvProtheus
+    // Leitura do Json Get e preenchimento do aDados
+    DbSelectArea("ZZA")
+    ZZA->(DbSetOrder(1))//ZZA_FILIAL+ZZA_SEQUEN
+    If ZZA->(DbSeek(xFilial("ZZA"))) 
+        While ZZA->(!EOF()) 
+            If ZZA->ZZA_STATUS == '2'
+                oRetUmov := NP3RETUMOV():New()
+                If oRetUmov:RetActHis(ZZA->ZZA_JSONG)
+                    ::aDados := oRetUmov:GetaRetUmov()
+                    If Len(::aDados) > 0
+                        oGrvProtheus := NP3F0201():New()
+                        If RecLock('ZZA',.f.) .and. oGrvProtheus:RetFromUmovIn(::aDados)
+                            ZZA->ZZA_STATUS := "3"
+                            ZZA->(MsUnlock())
+                            lRet := .t.
+                        Else 
+                            ::cError := oGrvProtheus:GetError()
+                        EndIf
+                    Else
+                        ::cError := "Ocorreu uma falha ao trata o history para um array."
+                    EndIf
+                EndIF
+                FreeObj(oRetUmov)
+            EndIf
+            ZZA->(DbSkip())
+        EndDo
+    EndIf
+Return lRet
+
+// Retona o erro
+METHOD GetError() Class NP3CALLBACK
+Return ::cError

@@ -1,0 +1,51 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
+#Include "Tlpp-core.th"
+
+User Function EnvioMobCode(cBody)
+    Local cUrl := "https://api-locavel.mobcode.com.br:3337/task/bulkInsert" // URL do serviço REST
+    Local cToken := SuperGetMv("MX_TOKENMC",,"52160b1e9a657fd941622f8df007e36ab88b3dae7fb742106138d6e998c5bad0") // Substitua pelo seu token de autenticação
+    Local cResponse := "" // Variável para armazenar a resposta
+    Local cHeaderGet := "" // Variável para armazenar a resposta
+    Local nTimeOut := 120
+    Local aHeadOut := {}
+    Local cErro     := ""
+    Local oJson
+    Default cBody := '' // Corpo JSON
+
+    AAdd( aHeadOut, 'Content-Type: application/json' )
+    AAdd( aHeadOut, 'Authorization: '+ cToken )
+
+    // Executa a requisição POST com autenticação
+    cResponse := HttpPost(cUrl, , cBody, nTimeOut, aHeadOut, @cHeaderGet)
+
+    //Pega o texto e transforma em objeto
+    oJson := JsonObject():New()
+    cErro := oJson:FromJson(cResponse)
+
+    // Exibe o código de resposta e o retorno no console
+    If Empty(cErro)//nStatusCode == 200
+        If oJson:HasProperty("status")
+            If oJson['status'] == 200
+                MsgInfo("Requisição bem-sucedida! Resposta: " + cResponse)
+            Else
+                MsgStop("Erro na requisição. Código: " + cValToChar(oJson['status']) + " - " + cResponse)
+            EndIf
+        Else
+            MsgStop("Erro na requisição." + cResponse)
+        EndIf
+    Else
+        MsgStop("Erro na requisição. Erro ao tentar recuperar a resposta da API - " + cResponse)
+    EndIf
+Return

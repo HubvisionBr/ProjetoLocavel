@@ -1,0 +1,372 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
+#Include "Tlpp-core.th"
+/*
+#---------------------------------------------------------------#
+| Programa:| NP3F0201                          Data:25/10/2023  |
+|---------------------------------------------------------------|
+| Autor:   | NP3 Tecnologia                                     |
+|---------------------------------------------------------------|
+| Objetivo:|Integração Fluig x Protheus x Umov                  |
+|---------------------------------------------------------------|
+|                        ALTERAÇÕES                             |
+|---------------------------------------------------------------|
+|     Analista      |   Data     |  Motivo                      |
+|---------------------------------------------------------------|
+|                   |            |                              |
+|                   |            |                              |
+#---------------------------------------------------------------#
+LINK TDN: ** NÃO TEM **
+*/
+CLASS NP3F0201
+    PRIVATE DATA cTxtErro as Character
+    PRIVATE DATA cAliasZZB as Character
+    PRIVATE DATA cQuery as Character
+    PUBLIC METHOD New() CONSTRUCTOR
+    PUBLIC METHOD EnvToUmov()
+    PUBLIC METHOD RetFromUmovIn(aDados)
+    PRIVATE METHOD Query()
+    PUBLIC METHOD GetError()
+ENDCLASS
+// Construtor
+METHOD New() CLASS NP3F0201
+    ::cAliasZZB := GetNextAlias()
+    ::cQuery    := ""
+RETURN
+// Envio da tarefa para o umov
+METHOD EnvToUmov() CLASS NP3F0201
+    Local cAliasZZB := ::cAliasZZB
+    Local oUMOV     := NP3UMOV():New()
+    Local aStandardS    := {}
+    Local aCustomS      := {}
+    Local aStandardI    := {}
+    Local aStandardIs   := {}
+    Local aCustomI      := {}
+    Local lReproc       := SuperGetMv("P3_REPROC",,.F.)
+    Local lRet          := .f.
+    // Local i
+    // Local oLog
+    // Monta o filtro
+    If lReproc //Se reprocessa pendentes
+        ::cQuery    := "%ZZB_IDUMOV = ''%"
+    Else
+        ::cQuery    := "%ZZB_DOC = '"+SD1->D1_DOC+"' AND ZZB_SERIE = '"+SD1->D1_SERIE+"' AND ZZB_FORNEC = '"+SD1->D1_FORNECE+"' AND ZZB_LOJA = '"+SD1->D1_LOJA+"' AND ZZB_CHASSI = '"+SD1->D1_XCHASSI+"'%"
+    EndIf
+    // Executa a query
+    ::Query()
+    // Preenche as informações para o umov
+    While (cAliasZZB)->(!Eof())
+        // Reinicia as variáveis
+        aStandardS := {}
+        aCustomS   := {}
+        aStandardI := {}
+        aStandardIs:= {}
+        aStandardIt := {}
+        aCustomI   := {}
+        aCustomIt   := {}
+        SD1->(DbSetOrder(1))
+        If SD1->(DbSeek(xFilial('SD1')+(cAliasZZB)->ZZB_DOC+(cAliasZZB)->ZZB_SERIE+(cAliasZZB)->ZZB_FORNEC+(cAliasZZB)->ZZB_LOJA))
+            While SD1->D1_FILIAL == xFilial('SD1') .AND. SD1->D1_DOC == (cAliasZZB)->ZZB_DOC .AND. SD1->D1_SERIE == (cAliasZZB)->ZZB_SERIE;
+                .AND. SD1->D1_FORNECE == (cAliasZZB)->ZZB_FORNEC .AND. SD1->D1_LOJA == (cAliasZZB)->ZZB_LOJA
+                If SD1->D1_XCHASSI == (cAliasZZB)->ZZB_CHASSI
+                    // Preenche informações do schedule
+                    // aAdd(aStandardS,{;
+                    //     {"agent",{{{"alternativeIdentifier","master"}}}},;
+                    //     {"serviceLocal",{{{"alternativeIdentifier","mov"}}}},;
+                    //     {"alternativeIdentifier",AllTrim((cAliasZZB)->ZZB_CHASSI)},;
+                    //     {"activitiesOrigin","7"},;
+                    //     {"date",SubStr(DToS(Date()),1,4)+"-"+SubStr(DToS(Date()),5,2)+"-"+SubStr(DToS(Date()),7,2)},;
+                    //     {"hour",SubStr(Time(),1,5)},;
+                    //     {"scheduleType",{{{"alternativeIdentifier","App"}}}};//{"activityRelationship",{{{"activity",{{{"alternativeIdentifier",AllTrim(ZZ9->ZZ9_IDMOV)}}}}}}};
+                    // })
+                    // aAdd(aCustomS,{})
+                    // Preenche informações do Item
+                    aAdd(aStandardIt,{;
+                        {"subGroup",{{{"alternativeIdentifier","0001"}}}},;
+                        {"description",AllTrim((cAliasZZB)->ZZB_CHASSI)},;
+                        {"active","true"},;
+                        {"alternativeIdentifier",AllTrim((cAliasZZB)->ZZB_CHASSI)};
+                    })
+                    aAdd(aCustomIt,{;                        
+                        {"Marca",SD1->D1_XMARCA},;
+                        {"Modelo",SD1->D1_XMODELO},;
+                        {"Placa",SD1->D1_XPLACA},;
+                        {"DTAQUISI",SubStr(DToS(SD1->D1_EMISSAO),1,4)+"-"+SubStr(DToS(SD1->D1_EMISSAO),5,2)+"-"+SubStr(DToS(SD1->D1_EMISSAO),7,2)};
+                    })
+                    // Preenche informações do scheduleItem
+                    // aStandardI := {}
+                    // aAdd(aStandardI,{;
+                    //     {"schedule",{{{"alternativeIdentifier",AllTrim((cAliasZZB)->ZZB_CHASSI)}}}},;
+                    //     {"item",{{{"alternativeIdentifier",AllTrim((cAliasZZB)->ZZB_CHASSI)}}}};
+                    // })
+                    // aAdd(aStandardIs,aStandardI)
+                    // aAdd(aCustomI,{})
+                    // Envia a tarefa para o umov
+                    // lRet := oUMOV:Schedules(aStandardS,aCustomS)
+                    lRet := oUMOV:Items(aStandardIt,aCustomIt)
+                    If lRet
+                        // LOG
+                        // oLog := NP3LOG01():New(AllTrim((cAliasZZB)->ZZB_IDFLUI)+AllTrim((cAliasZZB)->ZZB_SEQ),date(),SubStr(Time(),1,5),"AUTO","","02")
+                        // oLog:Grava()
+                        // Posiciona pelo Recno para gravar
+                        ZZB->(DbGoTo((cAliasZZB)->R_E_C_N_O_))
+                        If ZZB->(Recno()) == (cAliasZZB)->R_E_C_N_O_
+                            If RecLock('ZZB',.f.)
+                                ZZB->ZZB_IDUMOV := oUMOV:GetIdUmov()
+                                ZZB->ZZB_STATUS := "1"
+                                ZZB->(MsUnlock())
+                            EndIf
+                        EndIf
+                        // For i := 1 To Len(aStandardIs)
+                        //     lRet := oUMOV:ScheduleItems(aStandardIs[i],aCustomI)
+                        //     If !lRet
+                        //         ::cTxtErro := oUMOV:GetError()
+                        //         Exit
+                        //     EndIf
+                        // Next
+                    Else
+                        ::cTxtErro := oUMOV:GetError()
+                    EndIf
+                EndIf
+                SD1->(DbSkip())
+            EndDo
+        EndIf    
+        (cAliasZZB)->(DbSkip())
+    EndDo
+    // Finaliza o alias
+    If Select(cAliasZZB) <> 0
+        (cAliasZZB)->(DbCloseArea())
+    EndIf
+RETURN lRet
+// Retorna o inicio da tarefa do umov para o protheus
+METHOD RetFromUmovIn(aDados) CLASS NP3F0201
+    Local lRet := .f.
+    // Local cIdSchedule       := ""
+    Local cIdItem           := ""
+    Local cDescription      := ""
+    Local cDescTask         := ""
+    // Local nPosSchedule      := 0
+    // Local nPosIdSchedule    := 0
+    Local nPosIdItem        := 0
+    Local nPosSections      := 0
+    Local nPosItens         := 0
+    Local nPosFields        := 0
+    Local nPosFieldHistory  := 0
+    Local nPosFieldValue    := 0
+    Local nPosDescription   := 0
+    Local nPosActivy        := 0
+    Local nPosDescTask      := 0
+    Local nPosMarca         := 0
+    Local nPosModelo        := 0
+    Local nPosPlaca         := 0
+    Local nPosPlaqueta      := 0
+    Local aActvHist         := {}
+    Local aActivy           := {}
+    // Local aSchedule         := {}
+    Local aSections         := {}
+    Local aSection          := {}
+    Local aItens            := {}
+    Local aItem             := {}
+    Local aFields           := {}
+    Local aField            := {}
+    Local aFieldValues      := {}
+    Local aValues           := {}
+    Local i
+    Local j
+    Local k
+    Local x
+    Local cAliasSN1         := GetNextAlias()
+    // Local oLog
+    // Verifica se retornou dados
+    If Len(aDados) > 0
+        // Pegamos o array do activeHistory
+        aActvHist := aDados[2]
+        // Pegamos a posição do sections
+        nPosSections := aScan(aActvHist, {|x| AllTrim(x[1]) == "sections" })
+        aSections := aActvHist[nPosSections][2]
+        // Pegamos a tarefa a ser executada
+        nPosActivy := aScan(aActvHist, {|x| AllTrim(x[1]) == "activity" })
+        aActivy := aActvHist[nPosActivy][2]
+        nPosDescTask := aScan(aActivy, {|x| AllTrim(x[1]) == "description" })
+        cDescTask := aActivy[nPosDescTask][2]
+        // Valida tamanho de aSections
+        If Len(aSections)
+            For i := 1 to Len(aSections)
+                aSection := aSections[i][2]
+                // Busca posição do array de itens
+                nPosItens := aScan(aSection, {|x| AllTrim(x[1]) == "items" })
+                aItens := aSection[nPosItens][2]
+                If Len(aItens)
+                    For j := 1 to Len(aItens)
+                        aItem := aItens[j][2]
+                        // Posiciona na tarefa no Protheus
+                        nPosIdItem := aScan(aItem, {|x| AllTrim(x[1]) == "id" })
+                        cIdItem := aItem[nPosIdItem][2]
+                        ZZB->(DbSetOrder(2)) //ZZB_FILIAL+ZZB_IDUMOV
+                        If ZZB->(DbSeek(xFilial('ZZB')+cIdItem))
+                            // Busca posição de fields
+                            nPosFields := aScan(aItem, {|x| AllTrim(x[1]) == "fields" })
+                            aFields := aItem[nPosFields][2]
+                            If Len(aFields)
+                                For k := 1 to Len(aFields)
+                                    aField := aFields[k,2]
+                                    // Busca descrição
+                                    nPosDescription := aScan(aField, {|x| AllTrim(x[1]) == "description" })
+                                    cDescription := aField[nPosDescription][2]
+                                    // Busca posição de fieldHistory
+                                    nPosFieldHistory := aScan(aField, {|x| AllTrim(x[1]) == "fieldHistory" })
+                                    aFieldValues := aField[nPosFieldHistory][2]
+                                    If Len(aFieldValues)
+                                        nPosFieldValue := aScan(aFieldValues, {|x| AllTrim(x[1]) == "value" })
+                                        aAdd(aValues,{})
+                                        aValues[Len(aValues)] := {cDescription,aFieldValues[nPosFieldValue][2]}
+                                    EndIf
+                                Next
+                                If RecLock('ZZB',.f.)
+                                    If ZZB->ZZB_STATUS == "1"
+                                        If cDescTask == "RECEBIMENTO VEICULOS NOVOS"
+                                            ZZB->ZZB_STATUS := "2"
+                                        Else
+                                            ZZB->ZZB_STATUS := "3"
+                                        EndIf
+                                        // LOG
+                                        // oLog := NP3LOG01():New(AllTrim(ZZB->ZZB_IDFLUI)+AllTrim(ZZB->ZZB_SEQ),date(),SubStr(Time(),1,5),"AUTO","","03")
+                                        // oLog:Grava()
+                                    EndIf
+                                    // Posiciona na SD1
+                                    SD1->(DbSetOrder(1))
+                                    If SD1->(DbSeek(xFilial('SD1')+ZZB->ZZB_DOC+ZZB->ZZB_SERIE+ZZB->ZZB_FORNEC+ZZB->ZZB_LOJA))
+                                        While SD1->D1_FILIAL == xFilial('SD1') .AND. SD1->D1_DOC == ZZB->ZZB_DOC .AND. SD1->D1_SERIE == ZZB->ZZB_SERIE;
+                                            .AND. SD1->D1_FORNECE == ZZB->ZZB_FORNEC .AND. SD1->D1_LOJA == ZZB->ZZB_LOJA
+                                            If SD1->D1_XCHASSI == ZZB->ZZB_CHASSI
+                                                If RecLock('SD1',.f.)
+                                                    If cDescTask == "RECEBIMENTO VEICULOS NOVOS"
+                                                        If Empty(SD1->D1_XMARCA)
+                                                            nPosMarca := aScan(aValues, {|x| AllTrim(x[1]) == "Marca" })
+                                                            SD1->D1_XMARCA := aValues[nPosMarca,2]
+                                                        Endif
+                                                        If Empty(SD1->D1_XMODELO)
+                                                            nPosModelo := aScan(aValues, {|x| AllTrim(x[1]) == "Modelo" })
+                                                            SD1->D1_XMODELO := aValues[nPosModelo,2]
+                                                        EndIf
+                                                    Else
+                                                        If Empty(SD1->D1_XPLACA)
+                                                            nPosPlaca := aScan(aValues, {|x| AllTrim(x[1]) == "Placa" })
+                                                            SD1->D1_XPLACA := aValues[nPosPlaca,2]
+                                                        EndIf
+                                                    EndIf
+                                                    SD1->(MsUnlock())
+                                                EndIf
+                                                // Posicionar na SN1
+                                                If Select(cAliasSN1) <> 0
+                                                    (cAliasSN1)->(DbCloseArea())
+                                                EndIf
+                                                
+                                                BeginSql alias cAliasSN1
+                                                %noparser%
+                                                    Select R_E_C_N_O_ as RECNO from %Table:SN1% SN1
+                                                    Where N1_FILIAL = %Exp:SD1->D1_FILIAL%
+                                                        AND N1_NFISCAL = %Exp:SD1->D1_DOC%
+                                                        AND N1_NSERIE = %Exp:SD1->D1_SERIE%
+                                                        AND N1_FORNEC = %Exp:SD1->D1_FORNECE%
+                                                        AND N1_LOJA = %Exp:SD1->D1_LOJA%
+                                                        AND N1_XCHASSI = %Exp:SD1->D1_XCHASSI%
+                                                    and SN1.%notDel%
+                                                EndSql
+                                                
+                                                If (cAliasSN1)->(!EOF())
+                                                    SN1->(DbGoTo((cAliasSN1)->RECNO))
+                                                    If SN1->(Recno()) == (cAliasSN1)->RECNO
+                                                        If RecLock('SN1',.f.)
+                                                            If cDescTask == "RECEBIMENTO VEICULOS NOVOS"
+                                                                If Empty(SN1->N1_XMARCA)
+                                                                    nPosMarca := aScan(aValues, {|x| AllTrim(x[1]) == "Marca" })
+                                                                    If nPosMarca > 0
+                                                                        SN1->N1_XMARCA := aValues[nPosMarca,2]
+                                                                    EndIf
+                                                                Endif
+                                                                If Empty(SN1->N1_XMODELO)
+                                                                    nPosModelo := aScan(aValues, {|x| AllTrim(x[1]) == "Modelo" })
+                                                                    If nPosModelo > 0
+                                                                        SN1->N1_XMODELO := aValues[nPosModelo,2]
+                                                                    EndIf
+                                                                EndIf
+                                                            Else
+                                                                If Empty(SN1->N1_XPLACA)
+                                                                    nPosPlaca := aScan(aValues, {|x| AllTrim(x[1]) == "Placa" })
+                                                                    If nPosPlaca > 0
+                                                                        SN1->N1_XPLACA := aValues[nPosPlaca,2]
+                                                                    EndIf
+                                                                    nPosPlaqueta := aScan(aValues, {|x| AllTrim(x[1]) == "Plaqueta" })
+                                                                    If nPosPlaqueta > 0
+                                                                        SN1->N1_CHAPA := aValues[nPosPlaqueta,2]
+                                                                    EndIf
+                                                                EndIf
+                                                            EndIf
+                                                            nPosMacaco := aScan(aValues, {|x| AllTrim(x[1]) == "Macaco" })
+                                                            If nPosMacaco > 0
+                                                                SN1->N1_XMACACO := Iif(aValues[nPosMacaco,2]=="SIM","S","N")
+                                                            EndIf
+                                                            nPosTriangulo := aScan(aValues, {|x| AllTrim(x[1]) == "Triângulo" })
+                                                            If nPosTriangulo
+                                                                SN1->N1_XTRIAGU := Iif(aValues[nPosTriangulo,2]=="SIM","S","N")
+                                                            EndIf
+                                                            nPosEstepe := aScan(aValues, {|x| AllTrim(x[1]) == "Estepe" })
+                                                            If nPosEstepe > 0
+                                                                SN1->N1_XESTEPE := Iif(aValues[nPosEstepe,2]=="SIM","S","N")
+                                                            EndIf
+                                                            SN1->(MsUnlock())
+                                                        EndIf
+                                                    EndIf
+                                                EndIf
+                                                (cAliasSN1)->(DbCloseArea())
+                                                ZZB->(MsUnlock())
+                                            EndIf
+                                            SD1->(DbSkip())
+                                        EndDo
+                                    EndIf
+                                    lRet := .t.
+                                EndIf
+                            EndIf
+                        EndIf   
+                    Next
+                EndIf
+            Next
+        EndIf
+    EndIf
+RETURN lRet
+
+// Query de todas as funções
+METHOD Query() CLASS NP3F0201
+    Local cAliasZZB := ::cAliasZZB
+    Local cQuery    := ::cQuery
+    Local lRet      := .f.
+    // Query do movimento de tarefa
+    If Select(cAliasZZB) <> 0
+        (cAliasZZB)->(DbCloseArea())
+    EndIf
+    BeginSql alias cAliasZZB
+        Select * 
+        from %Table:ZZB% ZZB 
+        Where ZZB_FILIAL = %Exp:xFilial("ZZB")%
+            and %Exp:cQuery%
+            and ZZB.%notDel%
+    EndSql
+    If (cAliasZZB)->(!EOF())
+        lRet := .t.
+    EndIf
+RETURN lRet
+// Retorna o erro
+METHOD GetError() CLASS NP3F0201
+RETURN ::cTxtErro

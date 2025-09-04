@@ -1,0 +1,400 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
+#Include "Tlpp-core.th"
+
+User Function EnvioBin(cCodigo,lPlaca)
+    Local cUrl      := "https://ws.rgdoautomovel.com.br/binestadual" // URL do serviço REST
+    Local cCliente  := SuperGetMv("BN_CLIENTE",,"locavel")
+    Local cLogin    := SuperGetMv("BN_LOGIN",,"locavel")
+    Local cPassWord := SuperGetMv("BN_SENHA",,"L0c@velcity") 
+    Local cResponse := "" // Variável para armazenar a resposta
+    Local cHeaderGet:= "" // Variável para armazenar a resposta
+    Local nTimeOut  := 120
+    Local aHeadOut  := {}
+    Local cErro     := ""
+    Local cAviso    := ""
+    Local cMsg      := ""
+    Local oXML
+    Local cBody     := '' // Corpo JSON
+    Default cCodigo := ""
+    Default lPlaca  := .T.
+    Default lPlaca  := .T.
+
+    Local cUrl += "?pstrCliente="+cCliente+"&pstrLogin="+cLogin+"&pstrSenha="+cPassWord+Iif(lPlaca,"&pstrPlaca="+Alltrim(cCodigo),"&pstrChassi="+Alltrim(cCodigo)) // URL do serviço REST
+    
+    // TESTE
+    // RpcSetEnv("01","0101")
+
+    AAdd( aHeadOut, 'Content-Type: application/x-www-form-urlencoded' )
+    AAdd( aHeadOut, 'Accept: application/xml' )
+
+    // Executa a requisição POST com autenticação
+    cResponse := HttpPost(cUrl, , cBody, nTimeOut, aHeadOut, @cHeaderGet)
+
+    //Pega o texto e transforma em objeto
+    oXML := XmlParser(cResponse, "_", @cAviso, @cErro)
+
+    // Trata o retorno 
+    If Empty(cErro)
+        If RecLock('SN1',.F.)
+            If AttIsMemberOf(oXML:_STRUCT_RESPOSTARST,"_ERROMSG")
+                MsgStop(oXML:_STRUCT_RESPOSTARST:_ERROMSG:TEXT)
+                SN1->N1_XATUOK   := "N"
+            Else
+                gravaConsulta(oXML:_STRUCT_RESPOSTARST,lPlaca,@cMsg)
+                // MsgInfo("Consulta finalizada.")
+                SN1->N1_XATUOK   := "S"
+            EndIf
+            SN1->N1_XDTATU   := Date() 
+            SN1->N1_XRESULT  := cResponse                
+            SN1->(MsUnlock())
+        EndIf
+    Else
+        MsgStop("Erro na requisição. Erro ao tentar recuperar a resposta da API - " + cResponse)
+    EndIf
+Return
+
+Static Function gravaConsulta(oXML,lPlaca,cMsg)
+    Local oResposta := oXML:_RESPOSTA
+    Local lOk       := .T.
+    // Valida veículo
+    If lPlaca
+        If AttIsMemberOf(oResposta,"_CHASSI")
+            If Alltrim(oResposta:_CHASSI:TEXT) <> Alltrim(SN1->N1_CHASSIS)
+                logZZX("O Chassi retornado do BIN "+Alltrim(oResposta:_CHASSI:TEXT)+" é diferente do cadastro"+Alltrim(SN1->N1_CHASSIS)+", verifique.",.f.)
+                lOk := .F.
+            EndIf
+        EndIf
+    Else
+        If AttIsMemberOf(oResposta,"_PLACA")
+            If Alltrim(oResposta:_PLACA:TEXT) <> Alltrim(SN1->N1_CHAPA)
+                logZZX("A Placa retornado do BIN "+Alltrim(oResposta:_PLACA:TEXT)+" é diferente do cadastro"+Alltrim(SN1->N1_CHAPA)+", verifique.",.f.)
+                lOk := .F.
+            EndIf
+        EndIf
+    EndIf
+    // Grava os dados na tabela ST9
+    ST9->(DbSetOrder(1))
+    If ST9->(DbSeek(xFilial('ST9')+SN1->N1_CODBEM)) .and. lOk
+        // Atualiza os campos da tabela ST9 com os dados retornados
+        If RecLock('ST9',.F.)            
+            If AttIsMemberOf(oResposta,"_CPFCNPJCOMPRADOR")
+                cMsg += "_CPFCNPJCOMPRADOR"+": "+oResposta:_CPFCNPJCOMPRADOR:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_INDICADORCOMUNICAVENDA")
+                cMsg += "_INDICADORCOMUNICAVENDA"+": "+oResposta:_INDICADORCOMUNICAVENDA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_DATAINCLUSAOVENDA")
+                cMsg += "_DATAINCLUSAOVENDA"+": "+oResposta:_DATAINCLUSAOVENDA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_NRNOTAFISCAL")
+                cMsg += "_NRNOTAFISCAL"+": "+oResposta:_NRNOTAFISCAL:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_PROTOCOLODETRAN")
+                cMsg += "_PROTOCOLODETRAN"+": "+oResposta:_PROTOCOLODETRAN:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_TIPODOCCOMPRADOR")
+                cMsg += "_TIPODOCCOMPRADOR"+": "+oResposta:_TIPODOCCOMPRADOR:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_DATAVENDA")
+                cMsg += "_DATAVENDA"+": "+oResposta:_DATAVENDA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_DATAEMISSAOCRVCRVL")
+                cMsg += "_DATAEMISSAOCRVCRVL"+": "+oResposta:_DATAEMISSAOCRVCRVL:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_ANOEXERCICIOLICENCIAMENTO")
+                cMsg += "_ANOEXERCICIOLICENCIAMENTO"+": "+oResposta:_ANOEXERCICIOLICENCIAMENTO:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_DATALICENCIAMENTO")
+                cMsg += "_DATALICENCIAMENTO"+": "+oResposta:_DATALICENCIAMENTO:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_ANOFABRICACAO")
+                cMsg += "_ANOFABRICACAO"+": "+oResposta:_ANOFABRICACAO:TEXT+CRLF
+                ST9->T9_ANOFAB := oResposta:_ANOFABRICACAO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_ANOMODELO")
+                cMsg += "_ANOMODELO"+": "+oResposta:_ANOMODELO:TEXT+CRLF
+                ST9->T9_ANOMOD := oResposta:_ANOMODELO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CATEGORIA")
+                cMsg += "_CATEGORIA"+": "+oResposta:_CATEGORIA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_CHASSI")
+                cMsg += "_CHASSI"+": "+oResposta:_CHASSI:TEXT+CRLF
+                ST9->T9_CHASSI := oResposta:_CHASSI:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CPFCNPJFATURADO")
+                cMsg += "_CPFCNPJFATURADO"+": "+oResposta:_CPFCNPJFATURADO:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_COMBUSTIVEL")
+                cMsg += "_COMBUSTIVEL"+": "+oResposta:_COMBUSTIVEL:TEXT+CRLF
+                ST9->T9_XCCOMBU := oResposta:_COMBUSTIVEL:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_COR")
+                cMsg += "_COR"+": "+oResposta:_COR:TEXT+CRLF
+                ST9->T9_CORVEI := oResposta:_COR:TEXT
+                // ST9->T9_DESCOR := oResposta:_COR:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_MARCA")
+                cMsg += "_MARCA"+": "+oResposta:_MARCA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_MODELO")
+                cMsg += "_MODELO"+": "+oResposta:_MODELO:TEXT+CRLF
+                ST9->T9_TIPMOD := oResposta:_MODELO:TEXT
+                // ST9->T9_DESMOD := oResposta:_MODELO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_DATAULTIMAATUALIZACAO")
+                cMsg += "_DATAULTIMAATUALIZACAO"+": "+oResposta:_DATAULTIMAATUALIZACAO:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_MUNICIPIO")
+                cMsg += "_MUNICIPIO"+": "+oResposta:_MUNICIPIO:TEXT+CRLF
+                ST9->T9_CIDEMPL := oResposta:_MUNICIPIO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_NRMOTOR")
+                cMsg += "_NRMOTOR"+": "+oResposta:_NRMOTOR:TEXT+CRLF
+                ST9->T9_NRMOTOR := oResposta:_NRMOTOR:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_NRMOTORORIGINAL")
+                cMsg += "_NRMOTORORIGINAL"+": "+oResposta:_NRMOTORORIGINAL:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_PLACA")
+                cMsg += "_PLACA"+": "+oResposta:_PLACA:TEXT+CRLF
+                ST9->T9_PLACA := oResposta:_PLACA:TEXT
+                ST9->T9_CHAPA := oResposta:_PLACA:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_PROCEDENCIAVEICULO")
+                cMsg += "_PROCEDENCIAVEICULO"+": "+oResposta:_PROCEDENCIAVEICULO:TEXT+CRLF
+                ST9->T9_XPROCE := oResposta:_PROCEDENCIAVEICULO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_RENAVAM")
+                cMsg += "_RENAVAM"+": "+oResposta:_RENAVAM:TEXT+CRLF
+                ST9->T9_RENAVAM := oResposta:_RENAVAM:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_SITUACAOVEICULO")
+                cMsg += "_SITUACAOVEICULO"+": "+oResposta:_SITUACAOVEICULO:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_TIPO")
+                cMsg += "_TIPO"+": "+oResposta:_TIPO:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_ESPECIE")
+                cMsg += "_ESPECIE"+": "+oResposta:_ESPECIE:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_POTENCIA")
+                cMsg += "_POTENCIA"+": "+oResposta:_POTENCIA:TEXT+CRLF
+                ST9->T9_XPOTEN := oResposta:_POTENCIA:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CARROCERIA")
+                cMsg += "_CARROCERIA"+": "+oResposta:_CARROCERIA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_CILINDRADA")
+                cMsg += "_CILINDRADA"+": "+oResposta:_CILINDRADA:TEXT+CRLF
+                ST9->T9_XCILIN := oResposta:_CILINDRADA:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CAPACIDADEDECARGA")
+                cMsg += "_CAPACIDADEDECARGA"+": "+oResposta:_CAPACIDADEDECARGA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_CAPACIDADEPASSAGEIROS")
+                cMsg += "_CAPACIDADEPASSAGEIROS"+": "+oResposta:_CAPACIDADEPASSAGEIROS:TEXT+CRLF
+                ST9->T9_XCAPAC := oResposta:_CAPACIDADEPASSAGEIROS:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_NRCAIXACAMBIO")
+                cMsg += "_NRCAIXACAMBIO"+": "+oResposta:_NRCAIXACAMBIO:TEXT+CRLF
+                ST9->T9_XNRCX := oResposta:_NRCAIXACAMBIO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_NREIXOS")
+                cMsg += "_NREIXOS"+": "+oResposta:_NREIXOS:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_TERCEIROEIXO")
+                cMsg += "_TERCEIROEIXO"+": "+oResposta:_TERCEIROEIXO:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_EIXOTRASDIFERENCIAL")
+                cMsg += "_EIXOTRASDIFERENCIAL"+": "+oResposta:_EIXOTRASDIFERENCIAL:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_TIPOREMARCACAOCHASSI")
+                cMsg += "_TIPOREMARCACAOCHASSI"+": "+oResposta:_TIPOREMARCACAOCHASSI:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_MONTAGEM")
+                cMsg += "_MONTAGEM"+": "+oResposta:_MONTAGEM:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_UF")
+                cMsg += "_UF"+": "+oResposta:_UF:TEXT+CRLF
+                ST9->T9_UFEMPLA := oResposta:_UF:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CMT")
+                cMsg += "_CMT"+": "+oResposta:_CMT:TEXT+CRLF
+                ST9->T9_XCMT := oResposta:_CMT:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_PBT")
+                cMsg += "_PBT"+": "+oResposta:_PBT:TEXT+CRLF
+                ST9->T9_XPBT := oResposta:_PBT:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_DEBIPVA")
+                cMsg += "_DEBIPVA"+": "+oResposta:_DEBIPVA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_DEBLICENC")
+                cMsg += "_DEBLICENC"+": "+oResposta:_DEBLICENC:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_DEBITOMULTAS")
+                cMsg += "_DEBITOMULTAS"+": "+oResposta:_DEBITOMULTAS:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_DEBITODPVAT")
+                cMsg += "_DEBITODPVAT"+": "+oResposta:_DEBITODPVAT:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITOCETESB")
+                cMsg += "_VALORDEBITOCETESB"+": "+oResposta:_VALORDEBITOCETESB:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITODER")
+                cMsg += "_VALORDEBITODER"+": "+oResposta:_VALORDEBITODER:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITODERSA")
+                cMsg += "_VALORDEBITODERSA"+": "+oResposta:_VALORDEBITODERSA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITODETRAN")
+                cMsg += "_VALORDEBITODETRAN"+": "+oResposta:_VALORDEBITODETRAN:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITOIPVA")
+                cMsg += "_VALORDEBITOIPVA"+": "+oResposta:_VALORDEBITOIPVA:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITOMUNICIPAIS")
+                cMsg += "_VALORDEBITOMUNICIPAIS"+": "+oResposta:_VALORDEBITOMUNICIPAIS:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITOPRF")
+                cMsg += "_VALORDEBITOPRF"+": "+oResposta:_VALORDEBITOPRF:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITORENAINF")
+                cMsg += "_VALORDEBITORENAINF"+": "+oResposta:_VALORDEBITORENAINF:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITOLICENC")
+                cMsg += "_VALORDEBITOLICENC"+": "+oResposta:_VALORDEBITOLICENC:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITOMULTAS")
+                cMsg += "_VALORDEBITOMULTAS"+": "+oResposta:_VALORDEBITOMULTAS:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_VALORDEBITODPVAT")
+                cMsg += "_VALORDEBITODPVAT"+": "+oResposta:_VALORDEBITODPVAT:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_NOMEAGENTEFINANCEIRO")
+                cMsg += "_NOMEAGENTEFINANCEIRO"+": "+oResposta:_NOMEAGENTEFINANCEIRO:TEXT+CRLF
+                ST9->T9_XNMAGF := oResposta:_NOMEAGENTEFINANCEIRO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CPFCNPJFINANCIADO")
+                cMsg += "_CPFCNPJFINANCIADO"+": "+oResposta:_CPFCNPJFINANCIADO:TEXT+CRLF
+                ST9->T9_XCNPJF := StrTran(StrTran(StrTran(oResposta:_CPFCNPJFINANCIADO:TEXT,".",""),"-",""),"/","")
+            EndIf
+            If AttIsMemberOf(oResposta,"_DATAINCLUSAOFINANC")
+                cMsg += "_DATAINCLUSAOFINANC"+": "+oResposta:_DATAINCLUSAOFINANC:TEXT+CRLF
+                ST9->T9_XDTIF := STOD(StrTran(SubStr(oResposta:_DATAINCLUSAOFINANC:TEXT,1,10),"-",""))
+            EndIf
+            If AttIsMemberOf(oResposta,"_DATAINCLUSAOINTENCAOGRAVAME")
+                cMsg += "_DATAINCLUSAOINTENCAOGRAVAME"+": "+oResposta:_DATAINCLUSAOINTENCAOGRAVAME:TEXT+CRLF
+                ST9->T9_XDTII := STOD(StrTran(SubStr(oResposta:_DATAINCLUSAOINTENCAOGRAVAME:TEXT,1,10),"-",""))
+            EndIf
+            If AttIsMemberOf(oResposta,"_NOMEFINANCIADO")
+                cMsg += "_NOMEFINANCIADO"+": "+oResposta:_NOMEFINANCIADO:TEXT+CRLF
+                ST9->T9_XNMAGFI := oResposta:_NOMEFINANCIADO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_TIPORESTRICAOFINANCEIRA")
+                cMsg += "_TIPORESTRICAOFINANCEIRA"+": "+oResposta:_TIPORESTRICAOFINANCEIRA:TEXT+CRLF
+                ST9->T9_XTPRFIN := oResposta:_TIPORESTRICAOFINANCEIRA:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_NOMEAGENTEFINANCEIROINTENCAOGRAVAME")
+                cMsg += "_NOMEAGENTEFINANCEIROINTENCAOGRAVAME"+": "+oResposta:_NOMEAGENTEFINANCEIROINTENCAOGRAVAME:TEXT+CRLF
+                ST9->T9_XNMAGEN := oResposta:_NOMEAGENTEFINANCEIROINTENCAOGRAVAME:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CPFCNPJFINANCIADOINTENCAOGRAVAME")
+                cMsg += "_CPFCNPJFINANCIADOINTENCAOGRAVAME"+": "+oResposta:_CPFCNPJFINANCIADOINTENCAOGRAVAME:TEXT+CRLF
+                ST9->T9_XCNPJFI := StrTran(StrTran(StrTran(oResposta:_CPFCNPJFINANCIADOINTENCAOGRAVAME:TEXT,".",""),"-",""),"/","")
+            EndIf
+            If AttIsMemberOf(oResposta,"_NOMEFINANCIADOINTENCAOGRAVAME")
+                cMsg += "_NOMEFINANCIADOINTENCAOGRAVAME"+": "+oResposta:_NOMEFINANCIADOINTENCAOGRAVAME:TEXT+CRLF
+                ST9->T9_XNMAGEI := oResposta:_NOMEFINANCIADOINTENCAOGRAVAME:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAOFINANCEIRAINTENCAOGRAVAME")
+                cMsg += "_RESTRICAOFINANCEIRAINTENCAOGRAVAME"+": "+oResposta:_RESTRICAOFINANCEIRAINTENCAOGRAVAME:TEXT+CRLF
+                ST9->T9_XRESFIN := oResposta:_RESTRICAOFINANCEIRAINTENCAOGRAVAME:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_CPFCNPJPROPRIETARIO")
+                cMsg += "_CPFCNPJPROPRIETARIO"+": "+oResposta:_CPFCNPJPROPRIETARIO:TEXT+CRLF
+                ST9->T9_XCNPJPR := StrTran(StrTran(StrTran(oResposta:_CPFCNPJPROPRIETARIO:TEXT,".",""),"-",""),"/","")
+            EndIf
+            If AttIsMemberOf(oResposta,"_PROPRIETARIO")
+                cMsg += "_PROPRIETARIO"+": "+oResposta:_PROPRIETARIO:TEXT+CRLF
+                ST9->T9_XPROPRI := oResposta:_PROPRIETARIO:TEXT
+            EndIf
+            If AttIsMemberOf(oResposta,"_PROPRIETARIOANTERIOR")
+                cMsg += "_PROPRIETARIOANTERIOR"+": "+oResposta:_PROPRIETARIOANTERIOR:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO1")
+                cMsg += "_RESTRICAO1"+": "+oResposta:_RESTRICAO1:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO2")
+                cMsg += "_RESTRICAO2"+": "+oResposta:_RESTRICAO2:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO3")
+                cMsg += "_RESTRICAO3"+": "+oResposta:_RESTRICAO3:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO4")
+                cMsg += "_RESTRICAO4"+": "+oResposta:_RESTRICAO4:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO5")
+                cMsg += "_RESTRICAO5"+": "+oResposta:_RESTRICAO5:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO6")
+                cMsg += "_RESTRICAO6"+": "+oResposta:_RESTRICAO6:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO7")
+                cMsg += "_RESTRICAO7"+": "+oResposta:_RESTRICAO7:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO8")
+                cMsg += "_RESTRICAO8"+": "+oResposta:_RESTRICAO8:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO9")
+                cMsg += "_RESTRICAO9"+": "+oResposta:_RESTRICAO9:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO10")
+                cMsg += "_RESTRICAO10"+": "+oResposta:_RESTRICAO10:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_RESTRICAO11")
+                cMsg += "_RESTRICAO11"+": "+oResposta:_RESTRICAO11:TEXT+CRLF
+            EndIf
+            If AttIsMemberOf(oResposta,"_MENSAGEM")
+                cMsg += "_MENSAGEM"+": "+oResposta:_MENSAGEM:TEXT+CRLF
+            EndIf
+            ST9->(MsUnlock())
+            logZZX("Consulta ao BIN realizada com sucesso",.t.)
+        EndIf    
+    EndIf
+Return
+
+Static Function logZZX(cMsg,lOk)
+    // Grava o log na tabela ZZX
+    If RecLock('ZZX',.T.)
+        ZZX->ZZX_FILIAL := xFilial('ZZX')
+        ZZX->ZZX_CBASE  := SN1->N1_CBASE
+        ZZX->ZZX_ITEM   := SN1->N1_ITEM
+        ZZX->ZZX_PLACA  := SN1->N1_CHAPA
+        ZZX->ZZX_CHASSI := SN1->N1_CHASSIS
+        ZZX->ZZX_DTATU  := Date()
+        ZZX->ZZX_HORATU := SubStr(Time(),1,5)
+        ZZX->ZZX_XATUOK := Iif(lOk,"S","N")
+        ZZX->ZZX_MSG    := cMsg
+        ZZX->(MsUnlock())
+    EndIf
+    // Exibe a mensagem de retorno
+    If lOk
+        MsgInfo(cMsg)
+    Else
+        MsgStop(cMsg)
+    EndIf
+Return

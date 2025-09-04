@@ -1,0 +1,65 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
+#Include "Tlpp-core.th"
+
+/*/{Protheus.doc} preparaDados
+(long_description)
+@type user function
+@author user
+@since 12/03/2025
+@version version
+@param param_name, param_type, param_descr
+@return return_var, return_type, return_description
+@example
+(examples)
+@see (links_or_references)
+/*/
+User Function UATFE001()
+    Local cBody 
+    Local aPergs    := {}
+    Local aRet    := {}
+    Local cLocal    := Space(3)
+    Local cCondutor := Space(20)
+    
+    aAdd(aPergs, {1, "Local",  cLocal,  "", ".T.", "Z1LOC", ".T.", 80,  .T.})
+    aAdd(aPergs, {1, "Condutor", cCondutor,  "", ".T.", "", ".T.", 120,  .T.})
+    
+    If ParamBox(aPergs, "Informe os parâmetros",@aRet)
+            
+        // RpcSetEnv("01","0101")
+        cBody := '{'
+        cBody += '    "data": ['
+        cBody += '        {'
+        cBody += '        "tsk_active": 1,'
+        cBody += '        "tsk_integrationid": null,'
+        cBody += '        "stn_id": 30,'
+        cBody += '        "age_id": null,'
+        cBody += '        "tea_id": '+Alltrim(aRet[1])+','//Enviar codigo do time do mesmo campo de local
+        cBody += '        "tsf_id": 1,'
+        cBody += '        "loc_id": '+Alltrim(aRet[1])+','//Enviar código vindo do campo novo de lista
+        cBody += '        "ast_id": null,'
+        cBody += '        "tty_id": 25,'
+        cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
+        cBody += '        "tsk_schedulefinaldatehour": null,'
+        // cBody += '        "tsk_observation": "Placa - '+SN1->N1_CHAPA+' condutor -'+Alltrim(aRet[2])+'",'
+        cBody += '        "tsk_observation": "Placa - '+SN1->N1_CHAPA+'",'
+        cBody += '        "tsk_priority": null,'
+        cBody += '        "tsk_technicalinstruction": null'
+        cBody += '        }'
+        cBody += '    ]'
+        cBody += '}'
+
+        U_EnvioMobCode(cBody)
+    EndIf
+Return

@@ -1,8 +1,16 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
 #Include 'RestFul.CH'
 #INCLUDE "TOTVS.CH"
 #INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
 #INCLUDE 'RWMAKE.CH'
 #INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
 
 /*
 Nome: MT103FIM
@@ -10,8 +18,11 @@ Documentação: link da totvs
 Explicação: 
 */
 
-User Function  MT103FIM
-
+User Function MT103FIM()
+    Local nOpcao := PARAMIXB[1]
+    Local nConfirma := PARAMIXB[2]
+    // Local oUmov := NP3F0201():New()
+    Local aAreaSD1 := SD1->(GetArea())
 	Local cPedido := SD1->D1_PEDIDO
 	Local aAreaSC7 := SC7->(GetArea())
 	//Valida se NF é de filial diferente do Pedido
@@ -25,6 +36,55 @@ User Function  MT103FIM
 			Endif
 		Endif
 	Endif
+	
+	// Se for inclusão, se a ação foi confirmada e a nota tiver chassi informado
+    If nOpcao == 3 .and. nConfirma == 1 .and. !Empty(SD1->D1_CHASSI)
+        // // Cria a NFE na tabela de integração
+        // DbSelectArea("ZZB")
+        // ZZB->(DbSetOrder(1))
+        // If !ZZB->(DbSeek(xFilial('ZZB')+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA+SD1->D1_XCHASSI))
+        //     If RecLock('ZZB',.t.)
+        //         ZZB->ZZB_FILIAL := SD1->D1_FILIAL
+        //         ZZB->ZZB_DOC := SD1->D1_DOC
+        //         ZZB->ZZB_SERIE := SD1->D1_SERIE
+        //         ZZB->ZZB_FORNEC := SD1->D1_FORNECE
+        //         ZZB->ZZB_LOJA := SD1->D1_LOJA
+        //         ZZB->ZZB_CHASSI := SD1->D1_XCHASSI
+        //         ZZB->ZZB_STATUS := ""
+        //         ZZB->(MsUnlock())
+        //     EndIf
+        // EndIf
+        // // Posiciona na TES
+        // SF4->(DbSetOrder(1))// F4_FILIAL+F4_CODIGO
+        // If SF4->(DbSeek(xFilial('SF4')+SD1->D1_TES))
+        //     // Atualiza Ativo
+        //     If SF4->F4_ATUATF == "S"
+        //         If RecLock('SN1',.f.)
+        //             SN1->N1_XCHASSI := SD1->D1_XCHASSI
+        //             SN1->N1_XMARCA  := SD1->D1_XMARCA
+        //             SN1->N1_XMODELO := SD1->D1_XMODELO
+        //             SN1->N1_XPLACA  := SD1->D1_XPLACA
+        //             SN1->(MsUnlock())
+        //         EndIf
+        //     EndIf
+        // EndIf
+        // If oUmov:EnvToUmov()
+        //     If !IsBlind()
+        //         MsgInfo("NFE integrada ao Umov.")
+        //     Else
+        //         Conout("NFE integrada ao Umov.")
+        //     EndIf
+        // Else
+        //     If !IsBlind()
+        //         MsgAlert(oUmov:GetError())
+        //     Else
+        //         Conout(oUmov:GetError())
+        //     EndIf
+        // EndIf
+        // LOC001-JLS-21/05/2025
+        U_UCOME001()
+        RestArea(aAreaSD1)
+    EndIF
 
 	RestArea(aAreaSC7)
 Return

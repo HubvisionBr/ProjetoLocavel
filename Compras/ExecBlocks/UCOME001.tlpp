@@ -1,0 +1,74 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
+#Include "Tlpp-core.th"
+
+/*/{Protheus.doc} preparaDados
+(long_description)
+@type user function
+@author user
+@since 12/03/2025
+@version version
+@param param_name, param_type, param_descr
+@return return_var, return_type, return_description
+@example
+(examples)
+@see (links_or_references)
+/*/
+User Function UCOME001()
+    Local cBody 
+    // Local cQuery    := ""
+    // Local aParams   := {}
+    // Local nRecno    := 0
+    Local cTeam     := SuperGetMv("MX_TEAMMB",,"11")
+    Local cLoca     := SuperGetMv("MX_LOCAMB",,"4")
+
+    // cQuery := " SELECT R_E_C_N_O_ as RECNO FROM " + RetSqlName("SN1") 
+    // cQuery += " WHERE D_E_L_E_T_ = '' "
+    // cQuery += " AND N1_FILIAL = ? "
+    // cQuery += " AND N1_CHASSIS = ? "
+
+    // aaDD(aParams,xFilial('SN1'))
+    // aaDD(aParams,SD1->D1_CHASSI)
+
+    // If (nRecno := MpSysExecScalar(cQuery , 'RECNO', aParams) ) > 0
+    //     SN1->(DbGoTo(nRecno))
+
+    // SN1->(DBOrderNickname("CHASSIS"))
+    // If SN1->(DbSeek(xFilial('SN1')+PADR(SD1->D1_CHASSI,TamSx3("N1_CHASSIS")[1])))
+        // Cria o corpo JSON
+        cBody := '{'
+        cBody += '    "data": ['
+        cBody += '        {'
+        cBody += '        "tsk_active": 1,'
+        cBody += '        "tsk_integrationid": null,'
+        cBody += '        "stn_id": 30,'
+        cBody += '        "age_id": null,'
+        cBody += '        "tea_id": '+cTeam+','//Enviar codigo do time do mesmo campo de local
+        cBody += '        "tsf_id": 1,'
+        cBody += '        "loc_id": '+cLoca+','//Enviar código vindo do campo novo de lista
+        cBody += '        "ast_id": null,'
+        cBody += '        "tty_id": 32,'
+        cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
+        cBody += '        "tsk_schedulefinaldatehour": null,'
+        // cBody += '        "tsk_observation": "Chassi - '+SN1->N1_CHASSIS+'",'
+        cBody += '        "tsk_observation": "Chassi - '+SD1->D1_CHASSI+'",'
+        cBody += '        "tsk_priority": null,'
+        cBody += '        "tsk_technicalinstruction": null'
+        cBody += '        }'
+        cBody += '    ]'
+        cBody += '}'
+
+        U_EnvioMobCode(cBody)
+    // EndIf
+Return

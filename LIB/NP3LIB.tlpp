@@ -1,0 +1,90 @@
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include 'tlpp-core.th'
+/*
+#---------------------------------------------------------------#
+| Programa:| NP3LIB                             Data:11/04/2023 |
+|---------------------------------------------------------------|
+| Autor:   | NP3 Tecnologia                                     |
+|---------------------------------------------------------------|
+| Objetivo:|Lib onde consolida funções usadas frequentemente    |
+|---------------------------------------------------------------|
+|                        ALTERAÇÃES                             |
+|---------------------------------------------------------------|
+|     Analista      |   Data     |  Motivo                      |
+|---------------------------------------------------------------|
+|                   |            |                              |
+|                   |            |                              |
+#---------------------------------------------------------------#
+LINK TDN: ** NÃO TEM **
+*/
+CLASS NP3LIB
+    PRIVATE DATA isBlind AS Logical
+    PRIVATE DATA cEnter  AS Character
+    PRIVATE DATA cXml    AS Character
+    PRIVATE DATA aDados  AS Array
+    PUBLIC METHOD New() CONSTRUCTOR
+    PUBLIC METHOD MontaXml(aXml)
+    PUBLIC METHOD LeCsv(cArq)
+ENDCLASS
+
+// Contrutor
+METHOD New() CLASS NP3LIB
+	::isBlind   := IsBlind()
+	::cEnter    := CHR(13) + CHR(10)
+	::cXml      := ""
+	::aDados    := {}
+RETURN
+
+// Monta o XML
+METHOD MontaXml(aXml) CLASS NP3LIB
+	Local i,j
+    If Len(aXml) > 0
+        For i := 1 to len(aXml)
+            If ValType(aXml[i][1]) <> "U"
+                ::cXml += "<"+AllTrim(aXml[i][1])+">"
+                //Valida se for um array
+                If(ValType(aXml[i][2]) == "A")
+                    //Se for, entra na recusividade
+                    For j := 1 to len(aXml[i][2])
+                        ::MontaXml(aXml[i][2][j])
+                    Next
+                Else
+                    //Se não, passa o conteudo normal
+                    ::cXml += AllTrim(cValToChar(aXml[i][2]))
+                EndIf
+                ::cXml += "</"+AllTrim(aXml[i][1])+">"+::cEnter
+            EndIf
+        Next
+    EndIf
+RETURN
+
+// Ler o XML
+METHOD LeCsv(cArq) CLASS NP3LIB
+	Local lRet := .T.
+	Local oFile := FWFileReader():New(Alltrim(cArq))
+	//Se o arquivo pode ser aberto
+	If (oFile:Open())
+		//Se não for fim do arquivo
+		If ! (oFile:EoF())
+			//Enquanto houver linhas a serem lidas
+			While (oFile:HasLine())
+				//Buscando o texto da linha atual
+				cBuffer := oFile:GetLine()
+				//cBuffer := DecodeUTF8(cBuffer, "cp1252")
+				aADD(::aDados,Separa(cBuffer,";",.T.))
+			EndDo
+		else
+			ConOut("O arquivo " +cArq+ " não foi encontrado.","ATENCAO")
+			lRet := .F.
+		EndIf
+		//Fecha o arquivo e finaliza o processamento
+		oFile:Close()
+	else
+		ConOut("Arquivo "+cArq+" não pode ser aberto!")
+		lRet := .F.
+	EndIf
+Return lRet

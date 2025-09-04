@@ -1,0 +1,39 @@
+#Include 'Protheus.ch'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#include "parmtype.ch"
+
+// Busca o ativo posicionado na API BIN
+User Function UGFRE001()
+    Local lPlaca := MsgYesNo("DESEJA REALIZAR A PESQUISA PELA PLACA?"+CRLF+"Sim para pesquisar pela placa, não para pesquisar pelo chassis.") 
+    Local cAliasSN1 := GetNextAlias()
+    Local cWhere := Iif(lPlaca,"%N1_CHAPA = '"+ST9->T9_PLACA+"'%","%N1_CHASSIS = '"+ST9->T9_CHASSI+"'%")
+    Local nRecno := 0
+
+    If Iif(lPlaca,!Empty(ST9->T9_PLACA),!Empty(ST9->T9_CHASSI))
+        // Posiciona o alias SN1
+        BeginSql alias cAliasSN1
+        %noparser%
+            SELECT R_E_C_N_O_ AS RECNO
+            FROM %Table:SN1% SN1
+            WHERE SN1.%notDel%
+            AND SN1.N1_FILIAL = %Exp:xFilial('SN1')%
+            AND %Exp:cWhere%
+        EndSql
+        
+        // Agora, para cada registro, use (cAliasSN1)->RECNO para acessar o número do registro.
+        If (nRecno := (cAliasSN1)->RECNO) > 0
+            // Posiciona o registro
+            SN1->(DbGoTo(nRecno))
+            If SN1->(Recno()) == nRecno
+                // Chama a função de envio
+                U_EnvioBin(Iif(lPlaca,ST9->T9_PLACA,ST9->T9_CHASSI),lPlaca)
+            EndIf
+        Else
+            MsgStop("Nenhum ativo encontrado com "+Iif(lPlaca,"placa","chassis")+" "+Iif(lPlaca,ST9->T9_PLACA,ST9->T9_CHASSI)+".")
+        EndIf
+    Else
+        MsgStop(Iif(lPlaca,"Placa","Chassis")+" não informado.")
+    EndIf
+Return

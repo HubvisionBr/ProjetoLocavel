@@ -1,0 +1,16 @@
+#Include 'Protheus.ch'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#include "parmtype.ch"
+
+// Busca o ativo posicionado na API BIN
+User Function UATFE002()
+    Local lPlaca := MsgYesNo("DESEJA REALIZAR A PESQUISA PELA PLACA?"+CRLF+"Sim para pesquisar pela placa, não para pesquisar pelo chassis.") 
+    If Iif(lPlaca,!Empty(SN1->N1_CHAPA),!Empty(SN1->N1_CHASSIS))
+        // Chama a função de envio
+        U_EnvioBin(Iif(lPlaca,SN1->N1_CHAPA,SN1->N1_CHASSIS),lPlaca)
+    Else
+        MsgStop(Iif(lPlaca,"Placa","Chassis")+" não informado.")
+    EndIf
+Return
