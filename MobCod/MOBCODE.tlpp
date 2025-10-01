@@ -13,8 +13,8 @@
 #include 'fileio.ch'
 #Include "Tlpp-core.th"
 
-User Function EnvioMobCode(cBody)
-    Local cUrl := "https://api-locavel.mobcode.com.br:3337/task/bulkInsert" // URL do serviço REST
+User Function EnvioMobCode(cBody,cCompUrl)
+    Local cUrl := "https://api-locavel.mobcode.com.br:3337/" // URL do serviço REST
     Local cToken := SuperGetMv("MX_TOKENMC",,"52160b1e9a657fd941622f8df007e36ab88b3dae7fb742106138d6e998c5bad0") // Substitua pelo seu token de autenticação
     Local cResponse := "" // Variável para armazenar a resposta
     Local cHeaderGet := "" // Variável para armazenar a resposta
@@ -23,6 +23,9 @@ User Function EnvioMobCode(cBody)
     Local cErro     := ""
     Local oJson
     Default cBody := '' // Corpo JSON
+    Default cCompUrl := 'task/bulkInsert' // Complemento da URL
+
+    cUrl += cCompUrl
 
     AAdd( aHeadOut, 'Content-Type: application/json' )
     AAdd( aHeadOut, 'Authorization: '+ cToken )

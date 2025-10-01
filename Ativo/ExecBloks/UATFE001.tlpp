@@ -32,7 +32,7 @@ User Function UATFE001()
     Local cLocal    := Space(3)
     Local cCondutor := Space(20)
     
-    aAdd(aPergs, {1, "Local",  cLocal,  "", ".T.", "Z1LOC", ".T.", 80,  .T.})
+    aAdd(aPergs, {1, "Local",  cLocal,  "", ".T.", "SNL", ".T.", 80,  .T.})
     aAdd(aPergs, {1, "Condutor", cCondutor,  "", ".T.", "", ".T.", 120,  .T.})
     
     If ParamBox(aPergs, "Informe os parâmetros",@aRet)
@@ -45,9 +45,9 @@ User Function UATFE001()
         cBody += '        "tsk_integrationid": null,'
         cBody += '        "stn_id": 30,'
         cBody += '        "age_id": null,'
-        cBody += '        "tea_id": '+Alltrim(aRet[1])+','//Enviar codigo do time do mesmo campo de local
+        cBody += '        "tea_integrationid": '+Alltrim(aRet[1])+','//Enviar codigo do time do mesmo campo de local
         cBody += '        "tsf_id": 1,'
-        cBody += '        "loc_id": '+Alltrim(aRet[1])+','//Enviar código vindo do campo novo de lista
+        cBody += '        "loc_integrationid": '+Alltrim(aRet[1])+','//Enviar código vindo do campo novo de lista
         cBody += '        "ast_id": null,'
         cBody += '        "tty_id": 25,'
         cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
