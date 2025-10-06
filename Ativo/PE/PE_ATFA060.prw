@@ -47,13 +47,18 @@ Static Function enviaTrans(oModelx)
             cBody += '        "tsf_id": 1,'
             cBody += '        "loc_alternativeidentifier": "'+Iif(i==1,oModelx:GetValue("FNR_LOCORI"),oModelx:GetValue("FNR_LOCDES"))+'",'//Enviar código vindo do campo novo de lista
             cBody += '        "ast_id": null,'
-            cBody += '        "tty_id": 31,'//'Tipo Movimentação
+            cBody += '        "tty_id": 33,'//Tranferencia
             cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
             cBody += '        "tsk_schedulefinaldatehour": null,'
             // cBody += '        "tsk_observation": "Chassi - '+SN1->N1_CHASSIS+'",'
-            cBody += '        "tsk_observation": "TRANSFERENCIA DE FILIAL - '+SN1->N1_CHAPA+'",'
+            cBody += '        "tsk_observation": "TRANSFERENCIA DE FILIAL",'
             cBody += '        "tsk_priority": null,'
-            cBody += '        "tsk_technicalinstruction": null'
+            cBody += '        "tsk_technicalinstruction": null,'
+            cBody += '        "cf_placa": "'+SN1->N1_CHAPA+'",'
+            cBody += '        "cf_chassi": "'+SN1->N1_CODBAR+'",'
+            cBody += '        "cf_tipo": "'+Iif(i==1,"SAIDA","ENTRADA")+'",'
+            cBody += '        "cf_modelo": "'+SN1->N1_DESCRIC+'",'
+            cBody += '        "cf_marca": ""'
             cBody += '        }'
             cBody += '}'
         EndIf

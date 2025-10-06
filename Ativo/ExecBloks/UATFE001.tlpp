@@ -29,7 +29,7 @@ User Function UATFE001()
     Local cBody 
     Local aPergs    := {}
     Local aRet    := {}
-    Local cLocal    := Space(3)
+    Local cLocal    := Space(6)
     Local cCondutor := Space(20)
     
     aAdd(aPergs, {1, "Local",  cLocal,  "", ".T.", "SNL", ".T.", 80,  .T.})
