@@ -69,7 +69,7 @@ Static Function gravaConsulta(oXML,lPlaca,cMsg)
     Local oResposta := oXML:_RESPOSTA
     Local lOk       := .T.
     // Valida veículo
-    If lPlaca
+    If !lPlaca
         If AttIsMemberOf(oResposta,"_CHASSI")
             If Alltrim(oResposta:_CHASSI:TEXT) <> Alltrim(SN1->N1_CHASSIS)
                 logZZX("O Chassi retornado do BIN "+Alltrim(oResposta:_CHASSI:TEXT)+" é diferente do cadastro"+Alltrim(SN1->N1_CHASSIS)+", verifique.",.f.)
