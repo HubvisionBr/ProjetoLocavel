@@ -48,6 +48,8 @@ User Function MNTA420P()
 
                 U_EnvioMobCode(cBody,"task/create")
             EndIf
+        Else
+            MsgStop("Bem não encontrado: "+M->TJ_CODBEM)
         EndIf
     EndIf
  
