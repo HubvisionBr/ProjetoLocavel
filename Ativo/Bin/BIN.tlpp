@@ -52,9 +52,14 @@ User Function EnvioBin(cCodigo,lPlaca)
                 MsgStop(oXML:_STRUCT_RESPOSTARST:_ERROMSG:TEXT)
                 SN1->N1_XATUOK   := "N"
             Else
-                gravaConsulta(oXML:_STRUCT_RESPOSTARST,lPlaca,@cMsg)
-                // MsgInfo("Consulta finalizada.")
-                SN1->N1_XATUOK   := "S"
+                If AttIsMemberOf(oXML:_STRUCT_RESPOSTARST,"_RESPOSTA")
+                    gravaConsulta(oXML:_STRUCT_RESPOSTARST,lPlaca,@cMsg)
+                    // MsgInfo("Consulta finalizada.")
+                    SN1->N1_XATUOK   := "S"
+                Else
+                    MsgStop("Erro na requisição. Erro ao tentar recuperar a resposta da API - "+ CRLF + cResponse)
+                    SN1->N1_XATUOK   := "N"
+                EndIf
             EndIf
             SN1->N1_XDTATU   := Date() 
             SN1->N1_XRESULT  := cResponse                
