@@ -41,7 +41,7 @@ User Function EnvioMobCode(cBody,cCompUrl)
     If Empty(cErro)//nStatusCode == 200
         If oJson:HasProperty("status")
             If oJson['status'] == 200
-                MsgInfo("Requisição bem-sucedida! Resposta: " +CRLF+CRLF+ cResponse)
+                MsgInfo("Envio ao MobCode bem-sucedido!")
             Else
                 MsgStop("Erro na requisição. Código: " + cValToChar(oJson['status']) + " - " + cResponse)
             EndIf

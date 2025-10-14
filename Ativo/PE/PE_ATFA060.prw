@@ -51,7 +51,7 @@ Static Function enviaTrans(oModelx)
             cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
             cBody += '        "tsk_schedulefinaldatehour": null,'
             // cBody += '        "tsk_observation": "Chassi - '+SN1->N1_CHASSIS+'",'
-            cBody += '        "tsk_observation": "TRANSFERENCIA DE FILIAL",'
+            cBody += '        "tsk_observation": "TRANSFERENCIA DE FILIAL - PLACA: '+AllTrim(SN1->N1_CHAPA)+' CHASSI: '+AllTrim(SN1->N1_CODBAR)+'",'
             cBody += '        "tsk_priority": null,'
             cBody += '        "tsk_technicalinstruction": null,'
             cBody += '        "cf_placa": "'+SN1->N1_CHAPA+'",'
