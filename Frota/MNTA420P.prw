@@ -17,8 +17,8 @@ User Function MNTA420P()
         .and. Alltrim(M->TJ_SITUACA) == "L" .and. Alltrim(M->TJ_TERCEIR) == "2";
         .and. !Empty(STL->TL_CODIGO) .and. Alltrim(STL->TL_TIPOREG) == "T"
         // Posição do cursor no bem
-        SN1->(DbSetOrder(1))
-        If SN1->(DbSeek(xFilial('SN1')+M->TJ_CODBEM))   
+        ST9->(DbSetOrder(1))
+        If ST9->(DbSeek(xFilial('ST9')+M->TJ_CODBEM))   
             // Coleta o local do usuário
             If ParamBox(aPergs, "Informe os parâmetros",@aRet)
                 cBody := '{'
@@ -35,13 +35,13 @@ User Function MNTA420P()
                 cBody += '        "tty_id": 34,'//terceiro
                 cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
                 cBody += '        "tsk_schedulefinaldatehour": null,'
-                cBody += '        "tsk_observation": "FORNECEDOR: '+AllTrim(STL->TL_CODIGO)+'-'+NOMINSBRW(STL->TL_TIPOREG,STL->TL_CODIGO,STL->TL_LOJA)+' PLACA: '+AllTrim(SN1->N1_CHAPA)+' CHASSI: '+AllTrim(SN1->N1_CODBAR)+'",'
+                cBody += '        "tsk_observation": "FORNECEDOR: '+AllTrim(STL->TL_CODIGO)+'-'+NOMINSBRW(STL->TL_TIPOREG,STL->TL_CODIGO,STL->TL_LOJA)+' PLACA: '+AllTrim(ST9->T9_PLACA)+' CHASSI: '+AllTrim(ST9->T9_CHASSI)+'",'
                 cBody += '        "tsk_priority": null,'
                 cBody += '        "tsk_technicalinstruction": null,'
-                cBody += '        "cf_placa": "'+SN1->N1_CHAPA+'",'
-                cBody += '        "cf_chassi": "'+SN1->N1_CODBAR+'",'
+                cBody += '        "cf_placa": "'+ST9->T9_PLACA+'",'
+                cBody += '        "cf_chassi": "'+ST9->T9_CHASSI+'",'
                 cBody += '        "cf_tipo": "'+"SAIDA"+'",'
-                cBody += '        "cf_modelo": "'+SN1->N1_DESCRIC+'",'
+                cBody += '        "cf_modelo": "'+ST9->T9_NOME+'",'
                 cBody += '        "cf_marca": ""'
                 cBody += '        }'
                 cBody += '}'
