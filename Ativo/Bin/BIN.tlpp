@@ -52,14 +52,9 @@ User Function EnvioBin(cCodigo,lPlaca)
                 MsgStop(oXML:_STRUCT_RESPOSTARST:_ERROMSG:TEXT)
                 SN1->N1_XATUOK   := "N"
             Else
-                If AttIsMemberOf(oXML:_STRUCT_RESPOSTARST,"_RESPOSTA")
-                    gravaConsulta(oXML:_STRUCT_RESPOSTARST,lPlaca,@cMsg)
-                    // MsgInfo("Consulta finalizada.")
-                    SN1->N1_XATUOK   := "S"
-                Else
-                    MsgStop("Erro na requisição. Erro ao tentar recuperar a resposta da API - "+ CRLF + cResponse)
-                    SN1->N1_XATUOK   := "N"
-                EndIf
+                gravaConsulta(oXML:_STRUCT_RESPOSTARST,lPlaca,@cMsg)
+                // MsgInfo("Consulta finalizada.")
+                SN1->N1_XATUOK   := "S"
             EndIf
             SN1->N1_XDTATU   := Date() 
             SN1->N1_XRESULT  := cResponse                
@@ -74,7 +69,7 @@ Static Function gravaConsulta(oXML,lPlaca,cMsg)
     Local oResposta := oXML:_RESPOSTA
     Local lOk       := .T.
     // Valida veículo
-    If lPlaca
+    If !lPlaca
         If AttIsMemberOf(oResposta,"_CHASSI")
             If Alltrim(oResposta:_CHASSI:TEXT) <> Alltrim(SN1->N1_CHASSIS)
                 logZZX("O Chassi retornado do BIN "+Alltrim(oResposta:_CHASSI:TEXT)+" é diferente do cadastro"+Alltrim(SN1->N1_CHASSIS)+", verifique.",.f.)
@@ -377,6 +372,12 @@ Static Function gravaConsulta(oXML,lPlaca,cMsg)
                 cMsg += "_MENSAGEM"+": "+oResposta:_MENSAGEM:TEXT+CRLF
             EndIf
             ST9->(MsUnlock())
+            // Atualiza a SN1
+            If RecLock('SN1',.F.)
+                SN1->N1_CODCUSD := ST9->T9_ANOFAB
+                SN1->N1_TPOUTR  := ST9->T9_ANOMOD
+                SN1->(MsUnlock())
+            EndIf
             logZZX("Consulta ao BIN realizada com sucesso",.t.)
         EndIf    
     EndIf

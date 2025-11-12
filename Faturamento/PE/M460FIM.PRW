@@ -31,7 +31,9 @@ If alltrim(funname()) = "ATFA036"
         cIdentAtiv += alltrim(SN1->N1_DESCRIC) + " - " 
         // cIdentAtiv :=""+alltrim(SN1->N1_CHAPA)
         //cIdentAtiv +="AQUISICAO "+DtoC(SN1->N1_AQUISIC)+"/"
-        cIdentAtiv += alltrim(SN1->N1_CODBAR)
+        cIdentAtiv += alltrim(SN1->N1_CODBAR) + " - " 
+        cIdentAtiv += alltrim(SN1->N1_CODCUSD ) + "/" 
+        cIdentAtiv += alltrim(SN1->N1_TPOUTR ) 
 
         Reclock("SF2",.f.)
         Replace F2_MENNOTA with alltrim(SF2->F2_MENNOTA) + cIdentAtiv
@@ -51,18 +53,24 @@ Return
         
 
 User Function HISTSE1(cIdentAtiv)
- 
-dbSelectArea("SE1")
-dbSetOrder(1)      
-If dbSeek(xFilial("SE1")+SF2->F2_SERIE + SF2->F2_DOC)
-   While (E1_PREFIXO+E1_NUM) == (SF2->F2_SERIE+SF2->F2_DOC) .and. !Eof()
-      RecLock("SE1",.F.)
-      E1_HIST :=  cIdentAtiv
-      MsUnLock()
-      dbSkip()
-   EndDo
-Endif    
-
+    Local aAreaSD2 := SD2->(GetArea())
+    
+    dbSelectArea("SE1")
+    dbSetOrder(1)      
+    If dbSeek(xFilial("SE1")+SF2->F2_SERIE + SF2->F2_DOC)            
+        While (E1_PREFIXO+E1_NUM) == (SF2->F2_SERIE+SF2->F2_DOC) .and. !Eof()
+            RecLock("SE1",.F.)
+            E1_HIST :=  cIdentAtiv
+            // Busca centro de custo
+            SD2->(DbSetOrder(3))//D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM	
+            If SD2->(DbSeek(xFilial('SD2')+SF2->F2_SERIE + SF2->F2_DOC))
+                E1_CCUSTO :=  SD2->D2_CCUSTO
+            EndIf
+            MsUnLock()
+            dbSkip()
+        EndDo
+    Endif    
+    RestArea(aAreaSD2)
 Return
 
 

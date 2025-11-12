@@ -1,0 +1,41 @@
+#Include 'Protheus.ch'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#include "parmtype.ch"
+
+// Ajusta os status dos bens após 90 dias
+User Function UATFE003()
+    Local cQuery        := ""
+    Local cNextAlias	:= ""
+
+    RpcSetEnv("01","0101")
+
+    cNextAlias	:= GetNextAlias()
+
+    cQuery := " SELECT ST9.R_E_C_N_O_ AS RECNO "+;
+        " FROM " + RetSqlName("ST9") + " ST9 "+;
+        " WHERE ST9.D_E_L_E_T_ = '' "+;
+        " AND AND ("+DtoS(Date())+" - ST9.T9_DTBAIXA) > 90 "+;
+        " AND ST9.T9_SITMAN = 'A' "+;
+        " AND ST9.T9_SITBEM = 'A' "+;
+
+    cQuery := ChangeQuery(cQuery)
+
+    dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cNextAlias,.T.,.T.)
+
+    If !(cNextAlias)->(Eof())
+        While !(cNextAlias)->(Eof())
+            ST9->(DbGoTo((cNextAlias)->(RECNO)))
+            If ST9->(Recno()) == (cNextAlias)->(RECNO)
+                ST9->(RecLock("ST9",.F.))
+					ST9->T9_SITMAN := "I"
+					ST9->T9_SITBEM := "I"
+                ST9->(MsUnLock())
+            EndIf
+            (cNextAlias)->(DbSkip())
+        EndDo
+    EndIf
+    (cNextAlias)->(dbCloseArea())
+
+Return
