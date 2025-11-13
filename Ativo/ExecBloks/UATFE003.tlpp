@@ -4,38 +4,44 @@
 #INCLUDE 'COLORS.CH'
 #include "parmtype.ch"
 
-// Ajusta os status dos bens após 90 dias
+// Altera status da baixa
 User Function UATFE003()
     Local cQuery        := ""
     Local cNextAlias	:= ""
 
     RpcSetEnv("01","0101")
+    // Trava rotina
+    If ! LockByName("UATFE003_lock", .T., .F.)
+        conout("Rotina UATFE003 já está sendo executado."+DTOC(date())+SubStr(Time(),1,8))
+    Else
 
-    cNextAlias	:= GetNextAlias()
+        cNextAlias	:= GetNextAlias()
 
-    cQuery := " SELECT ST9.R_E_C_N_O_ AS RECNO "+;
-        " FROM " + RetSqlName("ST9") + " ST9 "+;
-        " WHERE ST9.D_E_L_E_T_ = '' "+;
-        " AND AND ("+DtoS(Date())+" - ST9.T9_DTBAIXA) > 90 "+;
-        " AND ST9.T9_SITMAN = 'A' "+;
-        " AND ST9.T9_SITBEM = 'A' "+;
+        cQuery := " SELECT ST9.R_E_C_N_O_ AS RECNO "+;
+            " FROM " + RetSqlName("ST9") + " ST9 "+;
+            " WHERE ST9.D_E_L_E_T_ = '' "+;
+            " AND ST9.T9_DTBAIXA = '"+DTOS(date())+"' "+;
+            " AND ST9.T9_SITMAN = 'I' "+;
+            " AND ST9.T9_SITBEM = 'I' "
 
-    cQuery := ChangeQuery(cQuery)
+        cQuery := ChangeQuery(cQuery)
 
-    dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cNextAlias,.T.,.T.)
+        dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cNextAlias,.T.,.T.)
 
-    If !(cNextAlias)->(Eof())
-        While !(cNextAlias)->(Eof())
-            ST9->(DbGoTo((cNextAlias)->(RECNO)))
-            If ST9->(Recno()) == (cNextAlias)->(RECNO)
-                ST9->(RecLock("ST9",.F.))
-					ST9->T9_SITMAN := "I"
-					ST9->T9_SITBEM := "I"
-                ST9->(MsUnLock())
-            EndIf
-            (cNextAlias)->(DbSkip())
-        EndDo
+        If !(cNextAlias)->(Eof())
+            While !(cNextAlias)->(Eof())
+                ST9->(DbGoTo((cNextAlias)->(RECNO)))
+                If ST9->(Recno()) == (cNextAlias)->(RECNO)
+                    ST9->(RecLock("ST9",.F.))
+                        ST9->T9_SITMAN := "A"
+                        ST9->T9_SITBEM := "A"
+                    ST9->(MsUnLock())
+                EndIf
+                (cNextAlias)->(DbSkip())
+            EndDo
+        EndIf
+        (cNextAlias)->(dbCloseArea())
+        // Destrava a rotina
+        UnLockByName("UATFE003_lock", .T., .F.)
     EndIf
-    (cNextAlias)->(dbCloseArea())
-
 Return

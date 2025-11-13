@@ -19,14 +19,16 @@ User Function CRMA980()
     Local cIdPonto := ""
     Local cIdModel := ""
     Local lIsGrid := .F.
+    Local nOperation
 
     If aParam <> NIL
         oModel   := aParam[1]
         cIdPonto := aParam[2]
         cIdModel := aParam[3]
         lIsGrid  := (Len(aParam) > 3)
+        nOperation := oModel:GetOperation()
  
-        If INCLUI .And. cIdPonto == "MODELCOMMITTTS"
+        If nOperation == 3  .And. cIdPonto == "MODELCOMMITTTS"
             RecLock("CTD",.T.)
 
             cItemcont := "CLI" + SA1->A1_COD + SA1->A1_LOJA

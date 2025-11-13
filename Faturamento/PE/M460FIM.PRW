@@ -23,7 +23,7 @@ Local cGrpVei  := Getmv("MV_XGRPPRO")
 //旼컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴커
 //� Executa funcao para gravacao dos dados do veiculo
 //읕컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴켸
-If alltrim(funname()) = "ATFA036" 
+If alltrim(funname()) == "ATFA036" 
     
     If alltrim(SN1->N1_PRODUTO) $ alltrim(cGrpVei) 
         

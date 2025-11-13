@@ -373,11 +373,8 @@ Static Function gravaConsulta(oXML,lPlaca,cMsg)
             EndIf
             ST9->(MsUnlock())
             // Atualiza a SN1
-            If RecLock('SN1',.F.)
-                SN1->N1_CODCUSD := ST9->T9_ANOFAB
-                SN1->N1_TPOUTR  := ST9->T9_ANOMOD
-                SN1->(MsUnlock())
-            EndIf
+            SN1->N1_CODCUSD := ST9->T9_ANOFAB
+            SN1->N1_TPOUTR  := ST9->T9_ANOMOD
             logZZX("Consulta ao BIN realizada com sucesso",.t.)
         EndIf    
     EndIf
