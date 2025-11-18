@@ -115,12 +115,12 @@ Private nTotPag  := 0
 Private nReem
 Private dDtEntrega
 
-// Pictures de Campos Padrão
+// Definicao de Pictures Padrão
 
 cCepPict  := PesqPict("SA2","A2_CEP")
 cCGCPict  := PesqPict("SA2","A2_CGC")
 cFonePict := PesqPict("SA2","A2_TEL")
-cTelPict  := PesqPict("SY1","Y1_TEL")
+CTelPict  := PesqPict("SY1","Y1_TEL")
 
 oFont1 := TFont():New( "Arial",,16,,.t.,,,,,.f. )
 oFont2 := TFont():New( "Arial",,16,,.f.,,,,,.f. )
@@ -169,7 +169,7 @@ EndIf
 	SetRegua(nPagD)
 	dbSeek(xFilial("SC7")+cCondBus,.T.) 
 	
-	// Contagem de paginas
+	// Loop Contagem de Paginas
 	
 	While !Eof() .And. C7_FILIAL == xFilial("SC7") .And. C7_NUM >= cCodIni .And. C7_NUM <= cCodFim 
 			           
@@ -195,15 +195,15 @@ EndIf
 	SetRegua(nPagD)
 	dbSeek(xFilial("SC7") + cCondBus,.T.) 	                           
 	
-	// Executar manualmente pois nao chama a funcao Cabec()
+	// Executar manualmente pois não carrega a Função Cabec()
 	
 	While !Eof() .And. C7_FILIAL == xFilial("SC7") .And. C7_NUM >= cCodIni .And. C7_NUM <= cCodFim
 		
-		// Variaveis para armazenar valores do pedido
+		// Variaveis para armazenamento
 		
-		nOrdem   := 1
-		nReem    := 0
-		nPag     := 1 
+		nOrdem := 1
+		nReem  := 0
+		nPag   := 1 
 
 		If (C7_EMISSAO < dParam3) .Or. (C7_EMISSAO > dParam4)
 			dbSkip()
@@ -380,7 +380,7 @@ cCompr   := Left(FWGetUserName(SC7->C7_USER),20)
 cTipoSC7 := IIf(SC7->C7_TIPO == 1,"PC","AE")	
 
 dbSelectArea("SCR")
-dbSetOrder(1)
+dbSetOrder(2)
 dbSeek(xFilial("SC7")+"PC"+SC7->C7_NUM)
 cAprov := "A G U A R D A N D O   L I B E R A C A O"
 While !Eof() .And. SCR->CR_FILIAL+AllTrim(SCR->CR_NUM) == xFilial("SC7")+SC7->C7_NUM .And. SCR->CR_TIPO == cTipoSC7
@@ -429,7 +429,9 @@ oPrn:Box( 0420, 3050, 0480,3180)//Solic.
 oPrn:Box( 0480, 0020, nLinMaxIte,0145)  //Item 
 oPrn:Box( 0480, 0145, nLinMaxIte,0380)  //Codigo
 oPrn:Box( 0480, 0380, nLinMaxIte,1300)  //Descri
+
 oPrn:Box( 0480, 1300, nLinMaxIte,1690)  //Obs
+
 oPrn:Box( 0480, 1690, nLinMaxIte,1800) //UN
 oPrn:Box( 0480, 1800, nLinMaxIte,1950) //Qtde
 oPrn:Box( 0480, 1950, nLinMaxIte,2230) //Valor Total
@@ -452,24 +454,24 @@ Else
 	oPrn:Say( 0080, 1040, "A U T O R I Z A Ç Ã O   D E   E N T R E G A",oFont1,100 )
 EndIf
 
-oPrn:Say( 0080, 2880, "FOLHA:" ,oFont3,100 )
-oPrn:Say( 0080, 3032, AllTrim(StrZero(nPag,2))+"/"+Alltrim(StrZero(nTotPag,2)),oFont3,100 )
+oPrn:Say( 0080, 2880, "PAGINA:" ,oFont3,100 )
+oPrn:Say( 0080, 3032, Alltrim(StrZero(nPag,2))+"/"+Alltrim(StrZero(nTotPag,2)),oFont3,100 )
 
 // Itens das Empresas
 oPrn:Say( 0185, 2570, "Nº "+SC7->C7_NUM,oFont7,100 )
 oPrn:Say( 0185, 2710, Str(nReem) + "ª Via",oFont5,100 )
 
-oPrn:Say( 0195, 0050, "EMPRESA: "+aDadEmp[01],oFont6,100 )
+oPrn:Say( 0195, 0050, "EMPRESA: "+aDadEmp[01] ,oFont6,100 )
 oPrn:Say( 0195, 1040, "FORNECEDOR: "+AllTrim(Substr(SA2->A2_NOME,1,40))+" ("+SA2->A2_COD+"/"+SA2->A2_LOJA +")",oFont6,100 )
 //oPrn:Say( 0370, 1950, "VENDEDOR: " + Upper(Substr(SC7->C7_CONTATO,1,25)),oFont6,100 )
 oPrn:Say( 0335, 1950, "VENDEDOR: " + Upper(Substr(SC7->C7_CONTATO,1,25)),oFont6,100 )
 
-oPrn:Say( 0265, 2570, "DATA EMISSÃO: " + DTOC(SC7->C7_EMISSAO),oFont6,100 )
+oPrn:Say( 0265, 2570, "DATA EMISSÃO: " + dToC(SC7->C7_EMISSAO) ,oFont6,100 )
 
-oPrn:Say( 0265, 0050, "ENDEREÇO: " + SubStr(UPPER(aDadEmp[06]),1,25) ,oFont6,100 )
-oPrn:Say( 0265, 0610, "BAIRRO: "   + UPPER(Substr(aDadEmp[07],1,25)) ,oFont6,100 )
-oPrn:Say( 0265, 1040, "ENDEREÇO: " + UPPER(Substr(SA2->A2_END,1,40)) ,oFont6,100 )
-oPrn:Say( 0265, 1950, "BAIRRO: "   + Substr(SA2->A2_BAIRRO,1,25) ,oFont6,100 )
+oPrn:Say( 0265, 0050, "ENDEREÇO: " + SubStr(Upper(aDadEmp[06]),1,25) ,oFont6,100 )
+oPrn:Say( 0265, 0610, "BAIRRO: "   + Upper(Substr(aDadEmp[07],1,25)) ,oFont6,100 )
+oPrn:Say( 0265, 1040, "ENDEREÇO: " + Upper(Substr(SA2->A2_END,1,40)) ,oFont6,100 )
+oPrn:Say( 0265, 1950, "BAIRRO: "   + SubStr(SA2->A2_BAIRRO,1,25) ,oFont6,100 )
 oPrn:Say( 0300, 0050, Upper("CEP: "+ Trans(aDadEmp[10],cCepPict)),oFont6,100 )
 oPrn:Say( 0300, 0610, Upper(Trim(aDadEmp[08])+" - "+aDadEmp[09]) ,oFont6,100 )
 	
@@ -482,7 +484,7 @@ oPrn:Say( 0320, 2720, cAprov      ,oFont5,100 )
 oPrn:Say( 0375, 2570, "APROVADOR: ",oFont6,100 )
 oPrn:Say( 0375, 2720, cAprovador   ,oFont5,100 )
 
-oPrn:Say( 0335, 0050, "FONE: " + aDadEmp[02] ,oFont6,100 )
+oPrn:Say( 0335, 0050, "FONE: " + Trans(aDadEmp[02],cFonePict),oFont6,100 )
 //oPrn:Say( 0335, 0610, "FAX: " + aDadEmp[03] ,oFont6,100 )
 
 oPrn:Say( 0335, 1040, "FONE: " + "("+Substr(SA2->A2_DDD,1,2)+") "+Trans(SA2->A2_TEL,cFonePict),oFont6,100 )
@@ -491,11 +493,11 @@ oPrn:Say( 0335, 1040, "FONE: " + "("+Substr(SA2->A2_DDD,1,2)+") "+Trans(SA2->A2_
 dbSelectArea("SX3")
 dbSetOrder(2)
 dbSeek("A2_CGC")
-cCGC := Alltrim(X3TITULO())
+//cCGC := Alltrim(X3TITULO())
 nOrden = IndexOrd()
 
-oPrn:Say( 0235, 0050, (cCGC) + " " + Transform(aDadEmp[04],cCgcPict) ,oFont6,100 ) 
-oPrn:Say( 0235, 0610, "IE: "  + aDadEmp[05] ,oFont6,100 )
+oPrn:Say( 0235, 0050, "CNPJ: " + Transform(aDadEmp[04],cCgcPict) ,oFont6,100 ) 
+oPrn:Say( 0235, 0610, "IE: "   + aDadEmp[05] ,oFont6,100 )
 
 dbSelectArea("SA2")
 dbSetOrder(nOrden)
@@ -510,8 +512,8 @@ oPrn:Say( 0435, 1360, "Observações",oFont3,100 )
 oPrn:Say( 0435, 1700, "UN"          ,oFont3,100 )
 oPrn:Say( 0435, 1820, "Qtd"         ,oFont3,100 )
 oPrn:Say( 0435, 2000, "Valor Unit." ,oFont3,100 )
-oPrn:Say( 0435, 2250, "ICMS%"       ,oFont3,100 )
-oPrn:Say( 0435, 2370, "IPI%"        ,oFont3,100 )
+oPrn:Say( 0435, 2250, "%ICMS"       ,oFont3,100 )
+oPrn:Say( 0435, 2370, "%IPI"        ,oFont3,100 )
 oPrn:Say( 0435, 2515, "Valor Total" ,oFont3,100 )
 oPrn:Say( 0435, 2720, "Dt Entr"     ,oFont3,100 )
 oPrn:Say( 0435, 2870, "C. Custo"    ,oFont3,100 )
@@ -581,7 +583,6 @@ Static Function ImpCampos()
 dbSelectArea("SC7")   
      
 //	Primeira/Segunda Unidade Medida
-
 If nParam5 == 2 .And. !Empty(SC7->C7_SEGUM)
    oPrn:Say( li, 1700, SC7->C7_SEGUM ,oFont6,100 )
 Else
@@ -599,7 +600,7 @@ Else
    If !lAux 
       oPrn:Say( li,1810, Transform(SC7->C7_QUANT,"@E 999,999.99") ,oFont6,100 )
    Else 
-      oPrn:Say( li,1810, Transform(SC7->C7_QUJE,"@E 999,999.9") ,oFont6,100 )   
+      oPrn:Say( li,1810, Transform(SC7->C7_QUJE,"@E 999,999.99") ,oFont6,100 )   
    EndIf 
 EndIf                                       
 
@@ -723,21 +724,19 @@ oPrn:Box( nLinMaxIte + 220, 2550, nLinMaxIte + 380,3180) // Total
 oPrn:Box( nLinMaxIte + 380, 0020, nLinMaxIte + 680,3180) //2130 Obs Finais   
 
 If cPaisLoc <> "BRA" .And. !Empty(aValIVA)
-   For nG:=1 To Len(aValIVA)
+   For nG:=1 to Len(aValIVA)
        nValIVA+=aValIVA[nG]
    Next
-EndIf   
+Endif   
    
     // Seleciona o Aprovador caso exista
-
 	dbSelectArea("SCR")
-	dbSetOrder(1)
+	dbSetOrder(2)
 	dbSeek(xFilial("SC7")+"PC"+SC7->C7_NUM)
-	
 	While !Eof() .And. SCR->CR_FILIAL+AllTrim(SCR->CR_NUM)==xFilial("SC7")+SC7->C7_NUM .And. SCR->CR_TIPO == "PC"
-		IF SCR->CR_STATUS=="03"
+		If SCR->CR_STATUS=="03"
 			cAprova += AllTrim(FWGetUserName(SCR->CR_USER))
-		EndIF
+		EndIf
 		dbSelectArea("SCR")
 		dbSkip()
 	Enddo  
@@ -774,16 +773,16 @@ dbSelectArea("SM4")
 dbSetOrder(1)
 dbSelectArea("SC7")
 
-// Impressao do Frete                                    
+// Impressao dos impostos                                    
 
 If SC7->C7_TPFRETE == 'C'
-   cTPFrete   := "CIF"
-   nTotFrete2 := MaFisRet(,'NF_FRETE')
-   nTotFrete  := MaFisRet(,'NF_FRETE')
+   cTPFrete := "CIF"
+   nTotFrete2:= MaFisRet(,'NF_FRETE')
+   nTotFrete:= MaFisRet(,'NF_FRETE')
 Else
-   cTPFrete   := "FOB"        
-   nTotFrete2 := MaFisRet(,'NF_FRETE')
-   nTotFrete  := 0
+   cTPFrete := "FOB"        
+   nTotFrete2:= MaFisRet(,'NF_FRETE')
+   nTotFrete:= 0
 EndIf
 
 // Primeira Caixa de Impostos
@@ -797,26 +796,26 @@ oPrn:Say( nLinMaxIte + 170, 0200, Transform(xMoeda(nTotIcms,SC7->C7_MOEDA,nParam
 
 oPrn:Say( nLinMaxIte + 120, 0950, "Frete + Despesas:" ,oFont3,100 )
 oPrn:Say( nLinMaxIte + 120, 1150, Transform(xMoeda(nTotFrete2+nTotDesp,SC7->C7_MOEDA,nParam7,SC7->C7_DATPRF),tm(nTotFrete,14,MsDecimais(nParam7))) ,oFont4c,100 )
-oPrn:Say( nLinMaxIte + 170, 0950, "Obs. Frete:" ,oFont3,100 )
+oPrn:Say( nLinMaxIte + 170, 0950, "Obs. Frete :" ,oFont3,100 )
 oPrn:Say( nLinMaxIte + 170, 1150, Alltrim(cTPFrete),oFont4c,100 )
 
 // Terceira Caixa de Impostos
 
 dbSelectArea("SE4")
 dbSetOrder(1)
-dbSeek("    "+SC7->C7_COND)  //Tabela SE4 - Condição de Pagamentos compartilhada
+dbSeek("  "+SC7->C7_COND)  //Tabela SE4 - Condição de Pagamentos compartilhada
 dbSelectArea("SC7")
 
-oPrn:Say( nLinMaxIte + 120, 1760, "Condição de Pagto:"   ,oFont3,100 )
+oPrn:Say( nLinMaxIte + 120, 1760, "Condição de Pagto :" ,oFont3,100 )
 oPrn:Say( nLinMaxIte + 120, 2100, Alltrim(SE4->E4_DESCRI),oFont6,100 )
-oPrn:Say( nLinMaxIte + 170, 1760, "Seguro:"              ,oFont3,100 )
+oPrn:Say( nLinMaxIte + 170, 1760, "Seguro :" ,oFont3,100 )
 oPrn:Say( nLinMaxIte + 170, 2000, Transform(xMoeda(nTotSeguro,SC7->C7_MOEDA,nParam7,SC7->C7_DATPRF),tm(nTotSeguro,14,MsDecimais(nParam7))),oFont6,100 )
-oPrn:Say( nLinMaxIte + 35, 2580, "SUB-TOTAL: "           ,oFont3,100 )
+oPrn:Say( nLinMaxIte + 35, 2580, "SUB-TOTAL: " ,oFont3,100 )
 oPrn:Say( nLinMaxIte + 35, 2810, Transform(xMoeda(nTotal,SC7->C7_MOEDA,nParam7,SC7->C7_DATPRF),tm(nTotal,14,MsDecimais(nParam7))) ,oFont6,100 )
 
-oPrn:Say( nLinMaxIte + 240 , 0050, "Local de Entrega: "  ,oFont3,100 )
+oPrn:Say( nLinMaxIte + 240 , 0050, "Local de Entrega: " ,oFont3,100 )
 
-//Verifica se existe local de entrega preenchido
+//Verifica se foi digitado algo no local de entrega
 
 If Empty(Alltrim(cPedEntr))
    oPrn:Say( nLinMaxIte + 240 , 0420, Alltrim(Substr(aDadEmp[06],1,30))+" - "+ Alltrim(Substr(aDadEmp[07],1,10))+" - " +Alltrim(Substr(aDadEmp[08],1,10))+" / "+aDadEmp[09]+ " - " + UPPER("CEP: "+Trans(aDadEmp[10],cCepPict)),oFont6,100 )
@@ -831,22 +830,22 @@ oPrn:Say( nLinMaxIte + 140 , 2580, "TOTAL S/ IMP.: ",oFont3,100 )
 oPrn:Say( nLinMaxIte + 140 , 2820, Transform(xMoeda((nTotal+nTotFrete+nTotDesp+nTotSeguro)-(nTotDesc+nTotIcms),SC7->C7_MOEDA,nParam7,SC7->C7_DATPRF),tm((nTotal+nTotFrete+nTotDesp+nTotSeguro)-(nTotDesc+nTotIcms),14,MsDecimais(nParam7))),oFont6,100 )
 
 oPrn:Say( nLinMaxIte + 280 , 2580, "TOTAL GERAL: ",oFont9,100 )
-oPrn:Say( nLinMaxIte + 280 , 2818, Transform(xMoeda((nTotal+nTotFrete+nTotDesp+nTotSeguro+nTotIpi)-nTotDesc,SC7->C7_MOEDA,nParam7,SC7->C7_DATPRF),tm((nTotal+nTotFrete+nTotDesp+nTotSeguro+nTotIpi)-nTotDesc,14,MsDecimais(nParam7))),oFont9c,100 )
+oPrn:Say( nLinMaxIte + 280 , 2818, Transform(xMoeda((nTotal+nTotFrete+nTotDesp+nTotSeguro+nTotIpi)-nTotDesc,SC7->C7_MOEDA,nParam7,SC7->C7_DATPRF),tm((nTotal+nTotFrete+nTotDesp+nTotSeguro+nTotIpi)-nTotDesc,14,MsDecimais(nParam7))),oFont9,100 )
 
 oPrn:Say( nLinMaxIte + 230 , 1750, "COMPRADOR: ",oFont5,100 )
 oPrn:Say( nLinMaxIte + 230 , 2100, UPPER(Alltrim(cCompr)),oFont6,100 )
 oPrn:Say( nLinMaxIte + 280 , 1750, "E-MAIL: ",oFont5,100 )
 oPrn:Say( nLinMaxIte + 280 , 1850, UPPER(Alltrim(cEmail)),oFont6,100 ) 
-oPrn:Say( nLinMaxIte + 330 , 1750, "TEL: ",oFont5,100 )
+oPrn:Say( nLinMaxIte + 330 , 1750, "FONE: ",oFont5,100 )
 oPrn:Say( nLinMaxIte + 330 , 1850, Trans(SY1->Y1_TEL,cTelPict),oFont6,100 ) 
                                                      
 oPrn:Say( nLinMaxIte + 470 , 0040,  " ATENÇÃO: ",oFont7,100 )
-oPrn:Say( nLinMaxIte + 470 , 0265,  "1) É obrigatório constar o Nº deste Pedido na NOTA FISCAL ELETRONICA, caso contrário não será aceita a mercadoria e/ou serviço",oFont4, 100 )
-oPrn:Say( nLinMaxIte + 520 , 0265,  "2) Não serão aceitas entregas em desconformidade com todas as condições descritas neste Pedido de Compra",oFont4, 100 )
-oPrn:Say( nLinMaxIte + 570 , 0265,  "3) Horário de recebimento de segunda a sexta das 8h às 16h",oFont4,100)
+oPrn:Say( nLinMaxIte + 420 , 0265,  "1) É obrigatório constar o Nº deste Pedido na NOTA FISCAL, sob pena de não ser(em) aceito(s) o(s) produto(s) e/ou serviço(s)", oFont4, 100 )
+oPrn:Say( nLinMaxIte + 470 , 0265,  "2) Não serão aceitas entregas em desconformidade com as condições expressas neste Pedido de Compra", oFont4, 100 )
+oPrn:Say( nLinMaxIte + 520 , 0265,  "3) Horário de recebimento: Segunda a Sexta das 8h às 12h - 13h às 16:30h", oFont4,100 ) 
 //oPrn:Say( nLinMaxIte + 470 , 0265,  "2) É obrigatório constar o Nº deste Pedido na NOTA FISCAL, sob pena de não ser aceita a mercadoria e/ou serviço",oFont4,100 ) 
 //oPrn:Say( nLinMaxIte + 520 , 0265,  "3) Não serão aceitas entregas em desconformidade com as condições expressas neste Pedido de Compra",oFont4,100 )
-//oPrn:Say( nLinMaxIte + 570 , 0265,  "4) Toda NOTA FISCAL emitida entre os dias 25 e 31 do mês atual, o fornecedor OBRIGATORIAMENTE deverá emitir a NF com data do 1º dia do mês subseqüente",oFont4,100 )
+//oPrn:Say( nLinMaxIte + 570 , 0265,  "4) Toda nota fiscal emitida entre os dias 25 e 31 do mês atual, o fornecedor OBRIGATORIAMENTE deverá emitir a NF com data do primeiro dia do mês subseqüente",oFont4,100 )
 //oPrn:Say( nLinMaxIte + 620 , 0265,  "5) Produtos quimicos e reagentes não serão recebidos sem os respectivos CERTIFICADOS DE QUALIDADE",oFont4,100 )
 
 Return .T.
@@ -867,22 +866,22 @@ dbSelectArea("SX1")
 dbSetOrder(1)
 aRegs := {}
 // Grupo/Ordem/Pergunta/Variavel/Tipo/Tamanho/Decimal/Presel/GSC/Valid/Var01/Def01/Cnt01/Var02/Def02/Cnt02/Var03/Def03/Cnt03/Var04/Def04/Cnt04/Var05/Def05/Cnt05
-aAdd(aRegs,{cPerg,"01","Do Pedido ?"        ,"¿De Pedido?","From Order ?"                  ,"mv_ch1","C",6,0,0,"G","","MV_PAR01","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
-aAdd(aRegs,{cPerg,"02","Até o Pedido ?"     ,"¿A  Pedido?","To Order ?"                    ,"mv_ch2","C",6,0,0,"G","","MV_PAR02","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
-aAdd(aRegs,{cPerg,"03","Da Data ?"          ,"¿De Fecha?","From Date ?"                    ,"mv_ch3","D",8,0,0,"G","","mv_par03","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
-aAdd(aRegs,{cPerg,"04","Até a Data ?"       ,"¿A  Fecha?","To Date ?"                      ,"mv_ch4","D",8,0,0,"G","","mv_par04","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
+aAdd(aRegs,{cPerg,"01","Do Pedido ?","¿De Pedido?","From Order ?","mv_ch1","C",6,0,0,"G","","MV_PAR01","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
+aAdd(aRegs,{cPerg,"02","Até o Pedido ?","¿A  Pedido?","To Order ?","mv_ch2","C",6,0,0,"G","","MV_PAR02","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
+aAdd(aRegs,{cPerg,"03","Da Data ?","¿De Fecha?","From Date ?","mv_ch3","D",8,0,0,"G","","mv_par03","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
+aAdd(aRegs,{cPerg,"04","Até a Data ?","¿A  Fecha?","To Date ?","mv_ch4","D",8,0,0,"G","","mv_par04","","","","","","","","","","","","","","","","","","","","","","","","","","S","",""})
 aAdd(aRegs,{cPerg,"05","Qual Unid. Medida ?","¿Cual Unidad Medida?","Which Unit of Meas. ?","mv_ch5","N",1,0,1,"C","","mv_par05","Primaria","Primaria","Primary","","","Secundaria","Secundaria","Secondary","","","","","","","","","","","","","","","","","","S","",""})
-aAdd(aRegs,{cPerg,"06","Numero de Vias ?"   ,"¿Numero de Copias?","Number of Copies ?"     ,"mv_ch6","N",2,0,0,"G","","mv_par06","","",""," 1","","","","7","","","","","","","","","","","","","","","","","","S","",""})
-aAdd(aRegs,{cPerg,"07","Qual Moeda ?"       ,"¿Cual Moneda?","Currency ?"                  ,"mv_ch7","N",1,0,1,"C","","mv_par07","Moeda 1","Moneda 1","Currency 1","","","Moeda 2","Moneda 2","Currency 2","","","Moeda 3","Moneda 3","Currency 3","","","Moeda 4","Moneda 4","Currency 4","","","Moeda 5","Moneda 5","Currency 5","","","S","",""})
+aAdd(aRegs,{cPerg,"06","Numero de Vias ?","¿Numero de Copias?","Number of Copies ?","mv_ch6","N",2,0,0,"G","","mv_par06","","",""," 1","","","","7","","","","","","","","","","","","","","","","","","S","",""})
+aAdd(aRegs,{cPerg,"07","Qual Moeda ?","¿Cual Moneda?","Currency ?","mv_ch7","N",1,0,1,"C","","mv_par07","Moeda 1","Moneda 1","Currency 1","","","Moeda 2","Moneda 2","Currency 2","","","Moeda 3","Moneda 3","Currency 3","","","Moeda 4","Moneda 4","Currency 4","","","Moeda 5","Moneda 5","Currency 5","","","S","",""})
 
 For i:=1 to Len(aRegs)
    //	If !dbSeek(cPerg+aRegs[i,2])  
-    If SX1->( !MsSeek(PadR(cPerg,10)+aRegs[i,2]) )
+    If SX1->( !MsSeek(padr(cPerg,10)+aRegs[i,2]) )
 		RecLock("SX1",.T.)
-		For j:=1 To FCount()
+		For j:=1 to FCount()
 			If j <= Len(aRegs[i])
 				FieldPut(j,aRegs[i,j])
-			EndIf
+			Endif
 		Next
 		MsUnlock()
 	Endif
@@ -922,12 +921,11 @@ DEFAULT cFiltro  := ""
 
 dbSelectArea("SC7")
 dbSetOrder(1)
-
 If dbSeek(xFilial("SC7")+cPedido+cItemDe+Alltrim(cSequen))
                 MaFisEnd()
                 MaFisIni(SC7->C7_FORNECE,SC7->C7_LOJA,"F","N","R",{})
-                While !Eof() .AND. SC7->C7_FILIAL+SC7->C7_NUM == xFilial("SC7")+cPedido .AND. SC7->C7_ITEM <= cItemAte .AND. (Empty(cSequen);
-				             .OR. cSequen == SC7->C7_SEQUEN)
+                While !Eof() .AND. SC7->C7_FILIAL+SC7->C7_NUM == xFilial("SC7")+cPedido .AND. ;
+                                   SC7->C7_ITEM <= cItemAte .AND. (Empty(cSequen) .OR. cSequen == SC7->C7_SEQUEN)
 
                                // Nao processar os Impostos se o item possuir residuo eliminado  
                                If &cFiltro
@@ -943,12 +941,12 @@ If dbSeek(xFilial("SC7")+cPedido+cItemDe+Alltrim(cSequen))
                                dbSetOrder(1)
                                dbSeek('SC7')
                                While !EOF() .AND. (X3_ARQUIVO == 'SC7')
-                                               cValid    := StrTran(Upper(SX3->X3_VALID)," ","")
+                                               cValid    := StrTran(UPPER(SX3->X3_VALID)," ","")
                                                cValid    := StrTran(cValid,"'",'"')
                                                If "MAFISREF" $ cValid
                                                                nPosRef  := AT('MAFISREF("',cValid) + 10
-                                                               cRefCols := SubStr(cValid,nPosRef,AT('","MT120",',cValid)-nPosRef )
-                                                               // Carrega os valores direto da SC7
+                                                               cRefCols := Substr(cValid,nPosRef,AT('","MT120",',cValid)-nPosRef )
+                                                               // Carrega os valores direto do SC7
                                                                MaFisLoad(cRefCols,&("SC7->"+ SX3->X3_CAMPO),nItem)
                                                EndIf
                                                dbSkip()
