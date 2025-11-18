@@ -41,7 +41,21 @@ If alltrim(funname()) == "ATFA036"
         U_HISTSE1(cIdentAtiv)
     
     Endif
-
+Else
+    dbSelectArea("SE1")
+    SE1->(dbSetOrder(1))      
+    If SE1->(dbSeek(xFilial("SE1")+SF2->F2_SERIE + SF2->F2_DOC))            
+        While (SE1->E1_PREFIXO+SE1->E1_NUM) == (SF2->F2_SERIE+SF2->F2_DOC) .and. SE1->(!Eof())
+            RecLock("SE1",.F.)
+            // Busca centro de custo
+            SD2->(DbSetOrder(3))//D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM	
+            If SD2->(DbSeek(xFilial('SD2')+SF2->F2_DOC+SF2->F2_SERIE))
+                SE1->E1_CCUSTO :=  SD2->D2_CCUSTO
+            EndIf
+            SE1->(MsUnLock())
+            SE1->(dbSkip())
+        EndDo
+    Endif    
 Endif
 
 RestArea(aAreaSE1)
@@ -53,7 +67,7 @@ Return
         
 
 User Function HISTSE1(cIdentAtiv)
-    Local aAreaSD2 := SD2->(GetArea())
+    
     
     dbSelectArea("SE1")
     dbSetOrder(1)      
@@ -63,14 +77,13 @@ User Function HISTSE1(cIdentAtiv)
             E1_HIST :=  cIdentAtiv
             // Busca centro de custo
             SD2->(DbSetOrder(3))//D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM	
-            If SD2->(DbSeek(xFilial('SD2')+SF2->F2_SERIE + SF2->F2_DOC))
+            If SD2->(DbSeek(xFilial('SD2')+SF2->F2_DOC+SF2->F2_SERIE))
                 E1_CCUSTO :=  SD2->D2_CCUSTO
             EndIf
             MsUnLock()
             dbSkip()
         EndDo
     Endif    
-    RestArea(aAreaSD2)
 Return
 
 
