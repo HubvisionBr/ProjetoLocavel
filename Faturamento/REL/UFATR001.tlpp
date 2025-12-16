@@ -1,0 +1,425 @@
+#Include 'Protheus.ch'
+#Include 'FWMVCDEF.ch'
+#Include 'RestFul.CH'
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TopConn.ch"
+#INCLUDE 'COLORS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'RWMAKE.CH'
+#INCLUDE "TBICONN.CH"
+#include "parmtype.ch"
+#INCLUDE "FWADAPTEREAI.CH"
+#Include "TBICODE.CH"
+#include 'fileio.ch'
+#Include "Tlpp-core.th"
+
+User Function UFATR001()
+    RpcSetEnv("01","0101")
+    Private cQuery  := ""
+    Private cHTML   := ""
+    Private cPERG   := "MNR580"
+    Private lOper   := If(Alltrim(GetMv("MV_NGOPER")) == "S",.T.,.F.)
+    Private cContab := GetMv("MV_MCONTAB")
+    Private vCampoCC:= {}
+
+    Private EMPRESA             := ""
+    Private SINISTRO_GRUPO      := ""
+    // Private SERVICOS            := ""
+    Private DATA_GERACAO_RELATORIO   := ""
+    Private UNIDADE             := ""
+    Private CNP_UNIDADE         := ""
+    Private ENDERECO_UNIDADE    := ""
+    Private TELEFONE_UNIDADE    := ""
+    Private COD_SINISTRO        := ""
+    Private TIPO_SINISTRO       := ""
+    Private NUMERO_BO           := ""
+    Private DATA_SINISTRO       := ""
+    Private HORA_SINISTRO       := ""
+    Private LOCAL_SINISTRO      := ""
+    Private BAIRRO_SINISTRO     := ""
+    Private CIDADE_SINISTRO     := ""
+    Private UF_SINISTRO         := ""
+    Private PLACA               := ""
+    Private CONTRATO_NO         := ""
+    Private MARCA               := ""
+    Private MODELO              := ""
+    Private COR                 := ""
+    Private ORGAO_LOCATARIO     := ""
+    Private CNPJ_LOCATARIO      := ""
+    Private ENDERECO_LOCATARIO  := ""
+    Private CONDUTOR            := ""
+    Private HABILITACAO         := ""
+    Private ORGAO_HABILITACAO   := ""
+    Private CATEGORIA_HABILITACAO   := ""
+    Private VALIDADE_HABILITACAO    := ""
+    Private TELEFONE_CONDUTOR   := ""
+    Private CELULAR_CONDUTOR    := ""
+    Private LOGRADOURO_CONDUTOR := ""
+    Private NUMERO_CONDUTOR     := ""
+    Private COMPLEMENTO_CONDUTOR    := ""
+    Private BAIRRO_CONDUTOR     := ""
+    Private CEP_CONDUTOR        := ""
+    Private CIDADE_CONDUTOR     := ""
+    Private UF_CONDUTOR         := ""
+    Private DESCRICAO_OCORRIDO  := ""
+    Private RESPONSAVEL_SINISTRO_LABEL := ""
+    Private GERENTE_RESPONSAVEL_LABEL := ""
+    Private EMPRESA_RODAPE      := ""
+    Private CNPJ_UNIDADE_RODAPE := ""
+
+	If cContab == "CTB"
+		vCampoCC := {"CTT","CTT_CUSTO","CTT_OPERAC"}
+	ElseIf cContab == "CON"
+		vCampoCC := {"SI3","I3_CUSTO","I3_OPERAC"}
+	EndIf
+
+    // Pergunte
+    Pergunte(cPERG,.T.)
+    MV_PAR01 := "03"
+    MV_PAR02 := "000002"
+    MV_PAR03 := ctod("01/01/2024")
+    MV_PAR04 := ctod("16/12/2025")
+    MV_PAR05 := "      "
+    MV_PAR06 := "   "
+    // Query
+    MontaQuery()
+    // Montagem dos dados
+    MontaDados()
+Return
+
+// Query
+Static Function MontaQuery()
+
+    cQuery := " SELECT TRH.*, "
+	cQuery += " ST9.T9_MODELO,  ST9.T9_CCUSTO, ST9.T9_SERIE,  ST9.T9_TIPMOD, T9_CORVEI  "
+	If lOper .AND.	!Empty(MV_PAR06)
+		cQuery += ",TSZ.TSZ_CODSER "
+	Endif
+	If !Empty(MV_PAR05)
+		cQuery += " ,TRV.TRV_CODMOT "
+	Endif
+	cQuery += " FROM " + RetSqlName("TRH")+" TRH, " + RetSqlName("ST9")+" ST9 "
+	If lOper .AND.	!Empty(MV_PAR06)
+		cQuery += ", " + RetSqlName("TSZ")+" TSZ "
+		If !Empty(MV_PAR06)
+			cQuery += ", " + RetSQLName(vCampoCC[1])+" D "
+		Endif
+	Endif
+	If !Empty(MV_PAR05)
+		cQuery += ", "  + RetSqlName("TRV")+" TRV "
+	Endif
+	cQuery += " WHERE TRH.TRH_CODBEM = ST9.T9_CODBEM "
+
+	If NGSX2MODO("ST9") == NGSX2MODO("TRH")
+		// cQuery += " AND ST9.T9_FILIAL = TRH.TRH_FILIAL "
+		cQuery += " AND '03' = TRH.TRH_FILIAL "
+	Else
+		cQuery += " AND ST9.T9_FILIAL = '"+xFilial("ST9")+"'"
+	EndIf
+
+	cQuery += " AND   TRH.D_E_L_E_T_ <> '*' "
+	cQuery += " AND   ST9.D_E_L_E_T_ <> '*' "
+	If !Empty(MV_PAR01)
+		cQuery += " AND TRH.TRH_NUMSIN  = '"+MV_PAR02+"'"
+		cQuery += " AND TRH.TRH_FILIAL  = '"+MV_PAR01+"'"
+	Else
+		cQuery += " AND TRH.TRH_FILIAL  = '"+xFilial("TRH")+"'"
+	Endif
+	If !Empty(MV_PAR03)
+		cQuery += " AND TRH.TRH_DTACID  >= '"+DTOS(MV_PAR03)+"'"
+	Endif
+	If !Empty(MV_PAR04)
+		cQuery += " AND TRH.TRH_DTACID  <= '"+DTOS(MV_PAR04)+"'"
+	Endif
+	If lOper .AND.	!Empty(MV_PAR06)
+		cQuery += " AND D."+vCampoCC[3]+"=TSZ.TSZ_CODSER "
+		cQuery += " AND TSZ.TSZ_CODSER = '"+MV_PAR06+"'"
+		cQuery += " AND D.D_E_L_E_T_ <> '*' "
+		cQuery += " AND TSZ.D_E_L_E_T_ <> '*' "
+	Endif
+	If !Empty(MV_PAR05)
+		cQuery += " AND TRV.TRV_FILIAL = TRH.TRH_FILIAL "
+
+		If NGSX2MODO("TRV") == NGSX2MODO("TRH")
+			cQuery += " AND TRV.TRV_FILIAL = TRH.TRH_FILIAL"
+		Else
+			cQuery += " AND TRV.TRV_FILIAL = '"+xFilial("TRV")+"'"
+		EndIf
+
+		cQuery += " AND TRV.TRV_NUMSIN = TRH.TRH_NUMSIN "
+		cQuery += " AND TRV.TRV_CODMOT = '"+MV_PAR05+"'"
+		cQuery += " AND TRV.D_E_L_E_T_ <> '*' "
+	Endif
+	cQuery := ChangeQuery(cQuery)
+Return
+
+Static Function MontaDados()
+    Local cAliasTRH := GetNextAlias()
+    Local lRet := .F.
+    Local lTRV := .F.
+    Local cEmpresa        := "" 
+    Local cCnpjEmpresa    := "" 
+    Local cGrupoEmpresa   := "" 
+    Local cEndEmpresa     := "" 
+    Local cTelEmpresa     := "" 
+    // Implementação da montagem dos dados a partir da query
+    dbUseArea( .T., "TOPCONN", TCGENQRY(,,cQuery),cAliasTRH, .F., .T.)
+    // Atribua os valores retornados da query às variáveis declaradas
+    If (cAliasTRH)->(!Eof()) 
+        // Dados da Empresa
+        cEmpresa        := AllTrim(GetAdvFVal("SM0", "M0_FILIAL", cEmpAnt + cFilAnt))
+        cCnpjEmpresa    := AllTrim(Transform(GetAdvFVal("SM0", "M0_CGC", cEmpAnt + cFilAnt), "@R 99.999.999/9999-99"))
+        cGrupoEmpresa   := AllTrim(GetAdvFVal("SM0", "M0_NOME", cEmpAnt + cFilAnt))
+        cEndEmpresa     := AllTrim(GetAdvFVal("SM0", "M0_ENDENT", cEmpAnt + cFilAnt))
+        cTelEmpresa     := AllTrim(Transform(GetAdvFVal("SM0", "M0_TEL", cEmpAnt + cFilAnt), "@R 99 9999-9999"))
+        // Loop pelos registros retornados
+        While (cAliasTRH)->(!Eof()) 
+            IF Empty(MV_PAR05)
+                TRV->(dbSetOrder(1))
+                lTRV := TRV->(dbSeek((cAliasTRH)->TRH_FILIAL+(cAliasTRH)->TRH_NUMSIN))
+            Else
+                TRV->(dbSetOrder(2))
+                lTRV := TRV->(dbSeek((cAliasTRH)->TRH_FILIAL+(cAliasTRH)->TRV_CODMOT+(cAliasTRH)->TRH_NUMSIN))
+            EndIf
+            If lTRV
+                DA4->(DbSetOrder(1))
+                If DA4->(DbSeek((cAliasTRH)->TRH_FILIAL+TRV->TRV_CODMOT))                      
+                    lRet := .T.
+                    // Cabeçalho
+                    EMPRESA             := cEmpresa
+                    SINISTRO_GRUPO      := cGrupoEmpresa
+                    // SERVICOS            := ""
+                    DATA_GERACAO_RELATORIO   := DTOC(STOD((cAliasTRH)->TRH_DTACID)) + " " + SubStr(Time(),1,5)
+                    // Unidade Emissora
+                    UNIDADE             := cEmpresa
+                    CNP_UNIDADE         := cCnpjEmpresa
+                    ENDERECO_UNIDADE    := cEndEmpresa
+                    TELEFONE_UNIDADE    := cTelEmpresa
+                    // Detalhes do Sinistro
+                    COD_SINISTRO        := AllTrim((cAliasTRH)->TRH_NUMSIN)
+                    TIPO_SINISTRO       := AllTrim(SX5->(VDISP('AF'+(cAliasTRH)->TRH_TIPACI,'X5_DESCRI')))
+                    NUMERO_BO           := AllTrim((cAliasTRH)->TRH_NUMBO)
+                    DATA_SINISTRO       := AllTrim(DTOC(STOD((cAliasTRH)->TRH_DTACID)))
+                    HORA_SINISTRO       := AllTrim((cAliasTRH)->TRH_HRACID)
+                    LOCAL_SINISTRO      := AllTrim((cAliasTRH)->TRH_LOCAL)
+                    BAIRRO_SINISTRO     := ""
+                    CIDADE_SINISTRO     := AllTrim((cAliasTRH)->TRH_CIDACI)
+                    UF_SINISTRO         := AllTrim((cAliasTRH)->TRH_UFACID)
+                    // Veículo e Contrato
+                    PLACA               := AllTrim((cAliasTRH)->TRH_PLACA)
+                    CONTRATO_NO         := ""
+                    MARCA               := ""
+                    MODELO              := AllTrim((cAliasTRH)->T9_MODELO)
+                    COR                 := AllTrim((cAliasTRH)->T9_CORVEI)
+                    ORGAO_LOCATARIO     := ""
+                    CNPJ_LOCATARIO      := ""
+                    ENDERECO_LOCATARIO  := ""
+                    // Condutor
+                    CONDUTOR            := AllTrim(DA4->DA4_NOME)	
+                    HABILITACAO         := AllTrim(DA4->DA4_NUMCNH)
+                    ORGAO_HABILITACAO   := ""
+                    CATEGORIA_HABILITACAO   := AllTrim(DA4->DA4_CATCNH)
+                    VALIDADE_HABILITACAO    := AllTrim(DTOC(DA4->DA4_DTVCNH))
+                    TELEFONE_CONDUTOR   := AllTrim(DA4->DA4_TEL)
+                    CELULAR_CONDUTOR    := ""
+                    LOGRADOURO_CONDUTOR := AllTrim(DA4->DA4_END)
+                    NUMERO_CONDUTOR     := ""
+                    COMPLEMENTO_CONDUTOR    := ""
+                    BAIRRO_CONDUTOR     := AllTrim(DA4->DA4_BAIRRO)
+                    CEP_CONDUTOR        := AllTrim(DA4->DA4_CEP)
+                    CIDADE_CONDUTOR     := AllTrim(DA4->DA4_MUN)
+                    UF_CONDUTOR         := AllTrim(DA4->DA4_EST)
+                    // Descrição do Ocorrido
+                    DESCRICAO_OCORRIDO  := AllTrim(MSMM((cAliasTRH)->TRH_MMSYP, 20000))
+                    // Fundamentação Legal
+                    RESPONSAVEL_SINISTRO_LABEL  := AllTrim(SRA->(VDISP(TRV->TRV_RESABE,'RA_NOME')))
+                    GERENTE_RESPONSAVEL_LABEL   := AllTrim(SRA->(VDISP(TRV->TRV_MATGER,'RA_NOME')))
+                    EMPRESA_RODAPE      := cEmpresa
+                    CNPJ_UNIDADE_RODAPE := cCnpjEmpresa
+
+                    // Montagem do HTML
+                    MontaHTML()
+                    // Gera PDF
+                    GeraPdf()
+                Else
+                    MsgStop("Nenhum registro encontrado na tabela DA4 Motoristas do sinistro: " + TRV->TRV_CODMOT)
+                EndIF
+            Else
+                MsgStop("Nenhum registro encontrado na tabela TRV complemento de sinistro: " + (cAliasTRH)->TRH_NUMSIN)
+            EndIf
+            (cAliasTRH)->(dbSkip())
+        EndDo
+    Else
+        MsgStop("Nenhum registro encontrado para os critérios informados.")
+    EndIf
+    (cAliasTRH)->(dbCloseArea())
+Return lRet
+
+// -----------------------------------------------------------------------
+// Layout HTML (Versão Compacta Final)
+// -----------------------------------------------------------------------
+Static Function MontaHTML()
+    // Encoding Windows-1252 para compatibilidade nativa com Protheus
+    cHTML := ' <!DOCTYPE html>'
+    cHTML += ' <html lang="pt-BR">'
+    cHTML += ' <head>'
+    cHTML += '    <meta charset="windows-1252">'
+    cHTML += '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+    cHTML += '    <title>Relatório de Sinistro</title>'
+    cHTML += '    <style>'
+    cHTML += '        @page { size: A4; margin: 10mm; }'
+    cHTML += '        body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; line-height: 1.2; margin: 0; padding: 0; }'
+    cHTML += '        .container { width: 100%; padding: 0px; }'
+    cHTML += '        h1 { font-size: 16px; text-align: center; color: #0056b3; text-transform: uppercase; margin: 2px 0; }'
+    cHTML += '        h2 { font-size: 13px; text-align: center; border-bottom: 2px solid #ccc; margin-bottom: 10px; padding-bottom: 2px; color: #0056b3; margin-top: 2px; }'
+    cHTML += '        h3 { font-size: 12px; color: #0056b3; font-weight: bold; margin-top: 10px; border-bottom: 1px solid #ccc; padding-bottom: 1px; margin-bottom: 5px; }'
+    cHTML += '        .info-group { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }'
+    cHTML += '        .info-item { flex: 1 1 48%; border-bottom: none; padding-bottom: 0px; margin-bottom: 1px; }' // Compactação máxima
+    cHTML += '        .full-width { flex: 1 1 100%; }'
+    cHTML += '        .info-item label { font-weight: bold; margin-right: 5px; font-size: 11px; color: #333; }'
+    cHTML += '        .desc-box { font-size: 11px; border: 1px solid #ddd; padding: 5px; min-height: 50px; background-color: #fcfcfc; }'
+    cHTML += '        .legal-text { font-size: 10px; text-align: justify; line-height: 1.1; margin-top: 2px; color: #333; }'
+    cHTML += '        .legal-text p { margin-bottom: 3px; margin-top: 0; }'
+    cHTML += '        .signature-area { margin-top: 20px; display: flex; justify-content: space-around; text-align: center; }'
+    cHTML += '        .signature-line { border-top: 1px solid #000; width: 200px; margin-bottom: 2px; }'
+    cHTML += '        .footer { font-size: 9px; text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top:2px; color: #777; }'
+    cHTML += '    </style>'
+    cHTML += ' </head>'
+    cHTML += ' <body>'
+    cHTML += '    <div class="container">'
+    cHTML += '        <div class="header">'
+    cHTML += '            <h1>'+EMPRESA+'</h1>'
+    cHTML += '            <h2>'+SINISTRO_GRUPO+'</h2>'
+    cHTML += '            <p style="text-align: right; font-size: 9px;">Impressão: '+DATA_GERACAO_RELATORIO+'</p>'
+    cHTML += '        </div>'
+    
+    // Unidade
+    cHTML += '        <h3>Unidade Emissora</h3>'
+    cHTML += '        <div class="info-group">'
+    cHTML += '            <div class="info-item"><label>Unidade:</label>'+UNIDADE+'</div>'
+    cHTML += '            <div class="info-item"><label>CNPJ:</label>'+CNP_UNIDADE+'</div>'
+    cHTML += '            <div class="info-item full-width"><label>Endereço:</label>'+ENDERECO_UNIDADE+'</div>'
+    cHTML += '            <div class="info-item"><label>Telefone:</label>'+TELEFONE_UNIDADE+'</div>'
+    cHTML += '        </div>'
+
+    // Sinistro
+    cHTML += '        <h3>Detalhes do Sinistro</h3>'
+    cHTML += '        <div class="info-group">'
+    cHTML += '            <div class="info-item"><label>Cód:</label>'+COD_SINISTRO+'</div>'
+    cHTML += '            <div class="info-item"><label>Tipo:</label>'+TIPO_SINISTRO+'</div>'
+    cHTML += '            <div class="info-item"><label>B.O.:</label>'+NUMERO_BO+'</div>'
+    cHTML += '            <div class="info-item"><label>Data/Hora:</label>'+DATA_SINISTRO+' às '+HORA_SINISTRO+'</div>'
+    cHTML += '            <div class="info-item full-width"><label>Local:</label>'+LOCAL_SINISTRO+', '+BAIRRO_SINISTRO+', '+CIDADE_SINISTRO+'/'+UF_SINISTRO+'</div>'
+    cHTML += '        </div>'
+
+    // Veículo
+    cHTML += '        <h3>Veículo e Contrato</h3>'
+    cHTML += '        <div class="info-group">'
+    cHTML += '            <div class="info-item"><label>Placa:</label>'+PLACA+'</div>'
+    cHTML += '            <div class="info-item"><label>Contrato:</label>'+CONTRATO_NO+'</div>'
+    cHTML += '            <div class="info-item"><label>Modelo:</label>'+MARCA+' / '+MODELO+'</div>'
+    cHTML += '            <div class="info-item"><label>Cor:</label>'+COR+'</div>'
+    cHTML += '            <div class="info-item full-width"><label>Locatário:</label>'+ORGAO_LOCATARIO+' (CNPJ: '+CNPJ_LOCATARIO+')</div>'
+    cHTML += '            <div class="info-item full-width"><label>Endereço:</label>'+ENDERECO_LOCATARIO+'</div>'
+    cHTML += '        </div>'
+
+    // Condutor
+    cHTML += '        <h3>Condutor</h3>'
+    cHTML += '        <div class="info-group">'
+    cHTML += '            <div class="info-item full-width"><label>Nome:</label>'+CONDUTOR+'</div>'
+    cHTML += '            <div class="info-item"><label>CNH:</label>'+HABILITACAO+'</div>'
+    cHTML += '            <div class="info-item"><label>Cat/Val:</label>'+CATEGORIA_HABILITACAO+' - '+VALIDADE_HABILITACAO+'</div>'
+    cHTML += '            <div class="info-item"><label>Contato:</label>'+TELEFONE_CONDUTOR+' / '+CELULAR_CONDUTOR+'</div>'
+    cHTML += '            <div class="info-item full-width"><label>Endereço:</label>'+LOGRADOURO_CONDUTOR+' '+NUMERO_CONDUTOR+' - '+BAIRRO_CONDUTOR+' ('+CIDADE_CONDUTOR+'/'+UF_CONDUTOR+')</div>'
+    cHTML += '        </div>'
+
+    // Ocorrido
+    cHTML += '        <h3>Descrição do Ocorrido</h3>'
+    cHTML += '        <div class="desc-box">'
+    cHTML += '            '+DESCRICAO_OCORRIDO
+    cHTML += '        </div>'
+
+    // Texto Legal 1
+    cHTML += '        <h3>Providências e Cobrança</h3>'
+    cHTML += '        <div class="legal-text">'
+    cHTML += '            <p>O PRESENTE RELATORIO E REALIZADO PARA, APURAR AS INFORMACOES SOBRE O SINISTRO, BEM COMO JUNTAR FOTOS, CROQUI B.O.'
+    cHTML += '               ESTADUAL E FEDERAL, LAUDO DE INSTITUTO DE CRIMINALISTICA, DENTRE OUTRAS DOCUMENTACOES.</p><br>'
+    cHTML += '            <p>ALEM DO ACIMA EXPOSTO, O PRESENTE SINISTRO, FAZ JUNTAR ORCAMENTO INTERNO E EXTERNOS DAS AVARIAS DO VEICULO
+    cHTML += '               SINISTRADO LOCADO AO PRESENTE ORGAO, O QUAL APOS FINALIZADO SERA COBRADO AO MESMO, POR ESTA EMPRESA, ATRAVES
+    cHTML += '               DE CARTA DE COBRANCA, JUNTO COM ESTE REFERIDO, DEMONSTRANDO ASSIM A EMPRESA A LISURA NA COBRANCA SEJA
+    cHTML += '               ADMINISTRATIVA OU FUTURAMENTE JUDICIAL.</p>'
+    cHTML += '        </div>'
+
+    // Texto Legal 2
+    cHTML += '        <h3>Fundamentação Legal</h3>'
+    cHTML += '        <div class="legal-text">'
+    cHTML += '            <p>As condutas realizadas pelos prepostos do orgao locatario, configurandom-se em ato ilicito civil, do qual decorre o dever dessa'
+    cHTML += '               de reparar civilmente o dano, nos termos dos Arts. 186 e 927 ambos do Codigo Civil Brasileiro, in verbis:.</p><br>'
+    cHTML += '            <p><strong>Art. 186:</strong> Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, comete ato ilícito.</p><br>'
+    cHTML += '            <p><strong>Art. 927:</strong> Aquele que, por ato ilícito, causar dano a outrem, fica obrigado a repará-lo.</p><br>'
+    cHTML += '            <p>No conceito de Serpa Lopes, o dano patrimonial:</p><br>'
+    cHTML += '            <p>"e o que afeta a um interesse patrimonial, a um bem considerado como de ordem patrimonial,'
+    cHTML += '                tradicionalmente estimavel em dinheiro. Assim, entende-se por dano toda diminuicao do patrimonio'
+    cHTML += '                do credor, quer consistente na perda sofrida (damnum emergens), quer num lucro de que haja sido'
+    cHTML += '                privado (damnum cessans). (Curso de direito civil, v.II, p.387)"</p><br>'
+    cHTML += '            <p><strong>Art. 569:</strong> O locatário é obrigado:'
+    cHTML += '               I - a servir-se da coisa alugada para os usos convencionados, bem como tratá-la com o mesmo cuidado como se sua fosse.</p><br><br>'
+    cHTML += '        </div>'
+
+    // Assinaturas
+    cHTML += '        <div class="signature-area">'
+    cHTML += '            <div><br><br>'
+    cHTML += '                <div class="signature-line"></div>'
+    cHTML += '                <span style="font-size:10px">'+RESPONSAVEL_SINISTRO_LABEL+'</span>'
+    cHTML += '            </div>'
+    cHTML += '            <div><br><br>'
+    cHTML += '                <div class="signature-line"></div>'
+    cHTML += '                <span style="font-size:10px">'+GERENTE_RESPONSAVEL_LABEL+'</span>'
+    cHTML += '            </div>'
+    cHTML += '        </div>'
+
+    // Rodapé
+    cHTML += '        <div class="footer">'
+    cHTML += '            <p>'+EMPRESA_RODAPE+' (CNPJ: '+CNPJ_UNIDADE_RODAPE+')</p>'
+    cHTML += '        </div>'
+    cHTML += '    </div>'
+    cHTML += ' </body>'
+    cHTML += ' </html>'
+Return
+
+// -----------------------------------------------------------------------
+// Geração e Impressão
+// -----------------------------------------------------------------------
+Static Function GeraPdf()
+    Local cFileSrv   := ""
+    Local cFileCli   := ""
+    // Garante nome único para não travar se gerar 2x seguidas
+    Local cUnique    := Replace(Time(), ":", "") 
+    Local cNomeArq   := "sinistro_" + COD_SINISTRO + "_" + cUnique + ".html"
+    
+    // Injeta script de impressão automática
+    cHtml += "<script type='text/javascript'>window.onload = function() { window.print(); }</script>"
+
+    // Caminho no Servidor (Spool é seguro)
+    cFileSrv := "\spool\" + cNomeArq 
+    
+    If MemoWrite(cFileSrv, cHtml)
+        
+        // Caminho no Cliente (Pasta do SmartClient é segura contra erro de permissão)
+        cFileCli := GetClientDir() + cNomeArq
+        
+        // Tenta copiar usando a função nativa (mais robusta)
+        If __CopyFile(cFileSrv, cFileCli)
+            ShellExecute("OPEN", cFileCli, "", "", 1)
+        Else
+            MsgStop("Falha ao copiar arquivo para: " + cFileCli)
+        EndIf
+        
+        // Limpeza do servidor
+        If File(cFileSrv)
+            FErase(cFileSrv)
+        EndIf
+    Else
+        MsgStop("Falha ao gravar arquivo HTML no servidor.")
+    EndIf
+Return

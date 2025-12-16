@@ -15,7 +15,7 @@ User Function MNTA420P()
  
     If nOPCX == 3 .and. !Empty(M->TJ_CODBEM) .and. !Empty(M->TJ_SERVICO);
         .and. Alltrim(M->TJ_SITUACA) == "L" .and. Alltrim(M->TJ_TERCEIR) == "2";
-        .and. !Empty(STL->TL_CODIGO) .and. Alltrim(STL->TL_TIPOREG) == "T"
+        .and. !Empty(M->TL_CODIGO) .and. Alltrim(M->TL_TIPOREG) == "T"
         // Posição do cursor no bem
         ST9->(DbSetOrder(1))
         If ST9->(DbSeek(xFilial('ST9')+M->TJ_CODBEM))   
@@ -35,7 +35,7 @@ User Function MNTA420P()
                 cBody += '        "tty_id": 34,'//terceiro
                 cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
                 cBody += '        "tsk_schedulefinaldatehour": null,'
-                cBody += '        "tsk_observation": "FORNECEDOR: '+AllTrim(STL->TL_CODIGO)+'-'+NOMINSBRW(STL->TL_TIPOREG,STL->TL_CODIGO,STL->TL_LOJA)+' PLACA: '+AllTrim(ST9->T9_PLACA)+' CHASSI: '+AllTrim(ST9->T9_CHASSI)+'",'
+                cBody += '        "tsk_observation": "FORNECEDOR: '+AllTrim(M->TL_CODIGO)+'-'+NOMINSBRW(M->TL_TIPOREG,M->TL_CODIGO,M->TL_LOJA)+' PLACA: '+AllTrim(ST9->T9_PLACA)+' CHASSI: '+AllTrim(ST9->T9_CHASSI)+'",'
                 cBody += '        "tsk_priority": null,'
                 cBody += '        "tsk_technicalinstruction": null,'
                 cBody += '        "cf_placa": "'+ST9->T9_PLACA+'",'
@@ -47,6 +47,8 @@ User Function MNTA420P()
                 cBody += '}'
 
                 U_EnvioMobCode(cBody,"task/create")
+            Else
+                MsgInfo("Operação cancelada pelo usuário, a tarefa não foi enviada ao MobCode pelo fato do local não ter sido escolhido.")
             EndIf
         Else
             MsgStop("Bem não encontrado: "+M->TJ_CODBEM)
