@@ -14,7 +14,7 @@
 #Include "Tlpp-core.th"
 
 User Function UFATR001()
-    RpcSetEnv("01","0101")
+    // RpcSetEnv("01","0101")
     Private cQuery  := ""
     Private cHTML   := ""
     Private cPERG   := "MNR580"
@@ -44,6 +44,8 @@ User Function UFATR001()
     Private MARCA               := ""
     Private MODELO              := ""
     Private COR                 := ""
+    Private ANO_FAB_MOD         := ""
+    Private CHASSI              := ""
     Private ORGAO_LOCATARIO     := ""
     Private CNPJ_LOCATARIO      := ""
     Private ENDERECO_LOCATARIO  := ""
@@ -74,24 +76,27 @@ User Function UFATR001()
 	EndIf
 
     // Pergunte
-    Pergunte(cPERG,.T.)
-    MV_PAR01 := "03"
-    MV_PAR02 := "000002"
-    MV_PAR03 := ctod("01/01/2024")
-    MV_PAR04 := ctod("16/12/2025")
-    MV_PAR05 := "      "
-    MV_PAR06 := "   "
-    // Query
-    MontaQuery()
-    // Montagem dos dados
-    MontaDados()
+    IF Pergunte(cPERG,.T.)
+        // MV_PAR01 := "03"
+        // MV_PAR02 := "000002"
+        // MV_PAR03 := ctod("01/01/2024")
+        // MV_PAR04 := ctod("16/12/2025")
+        // MV_PAR05 := "      "
+        // MV_PAR06 := "   "
+        // Query
+        MontaQuery()
+        // Montagem dos dados
+        MontaDados()
+    Else
+        MsgInfo("Operação cancelada pelo usuário.")
+    EndIf
 Return
 
 // Query
 Static Function MontaQuery()
 
     cQuery := " SELECT TRH.*, "
-	cQuery += " ST9.T9_MODELO,  ST9.T9_CCUSTO, ST9.T9_SERIE,  ST9.T9_TIPMOD, T9_CORVEI  "
+	cQuery += " ST9.*  "
 	If lOper .AND.	!Empty(MV_PAR06)
 		cQuery += ",TSZ.TSZ_CODSER "
 	Endif
@@ -110,9 +115,10 @@ Static Function MontaQuery()
 	Endif
 	cQuery += " WHERE TRH.TRH_CODBEM = ST9.T9_CODBEM "
 
-	If NGSX2MODO("ST9") == NGSX2MODO("TRH")
-		// cQuery += " AND ST9.T9_FILIAL = TRH.TRH_FILIAL "
-		cQuery += " AND '03' = TRH.TRH_FILIAL "
+	// If NGSX2MODO("ST9") == NGSX2MODO("TRH")
+	If FWModeAccess("ST9",1)+FWModeAccess("ST9",2)+FWModeAccess("ST9",3) == FWModeAccess("TRH",1)+FWModeAccess("TRH",2)+FWModeAccess("TRH",3)
+		cQuery += " AND ST9.T9_FILIAL = TRH.TRH_FILIAL "
+		// cQuery += " AND '03' = TRH.TRH_FILIAL "
 	Else
 		cQuery += " AND ST9.T9_FILIAL = '"+xFilial("ST9")+"'"
 	EndIf
@@ -186,8 +192,8 @@ Static Function MontaDados()
                 If DA4->(DbSeek((cAliasTRH)->TRH_FILIAL+TRV->TRV_CODMOT))                      
                     lRet := .T.
                     // Cabeçalho
-                    EMPRESA             := cEmpresa
-                    SINISTRO_GRUPO      := cGrupoEmpresa
+                    EMPRESA             := "SINISTRO - "+cGrupoEmpresa//cEmpresa
+                    SINISTRO_GRUPO      := ""//cGrupoEmpresa
                     // SERVICOS            := ""
                     DATA_GERACAO_RELATORIO   := DTOC(STOD((cAliasTRH)->TRH_DTACID)) + " " + SubStr(Time(),1,5)
                     // Unidade Emissora
@@ -211,6 +217,8 @@ Static Function MontaDados()
                     MARCA               := ""
                     MODELO              := AllTrim((cAliasTRH)->T9_MODELO)
                     COR                 := AllTrim((cAliasTRH)->T9_CORVEI)
+                    ANO_FAB_MOD         := DTOC(STOD((cAliasTRH)->T9_ANOFAB)) + "/" + DTOC(STOD((cAliasTRH)->T9_ANOMOD))
+                    CHASSI              := AllTrim((cAliasTRH)->T9_CHASSI)
                     ORGAO_LOCATARIO     := ""
                     CNPJ_LOCATARIO      := ""
                     ENDERECO_LOCATARIO  := ""
@@ -280,6 +288,7 @@ Static Function MontaHTML()
     cHTML += '        .desc-box { font-size: 11px; border: 1px solid #ddd; padding: 5px; min-height: 50px; background-color: #fcfcfc; }'
     cHTML += '        .legal-text { font-size: 10px; text-align: justify; line-height: 1.1; margin-top: 2px; color: #333; }'
     cHTML += '        .legal-text p { margin-bottom: 3px; margin-top: 0; }'
+    cHTML += '        .centralizado {text-align: justify;width: 75%;margin: 15px auto;font-style: italic;line-height: 1.3;}'
     cHTML += '        .signature-area { margin-top: 20px; display: flex; justify-content: space-around; text-align: center; }'
     cHTML += '        .signature-line { border-top: 1px solid #000; width: 200px; margin-bottom: 2px; }'
     cHTML += '        .footer { font-size: 9px; text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top:2px; color: #777; }'
@@ -317,8 +326,11 @@ Static Function MontaHTML()
     cHTML += '        <div class="info-group">'
     cHTML += '            <div class="info-item"><label>Placa:</label>'+PLACA+'</div>'
     cHTML += '            <div class="info-item"><label>Contrato:</label>'+CONTRATO_NO+'</div>'
-    cHTML += '            <div class="info-item"><label>Modelo:</label>'+MARCA+' / '+MODELO+'</div>'
+    // cHTML += '            <div class="info-item"><label>Modelo:</label>'+MARCA+' / '+MODELO+'</div>'
+    cHTML += '            <div class="info-item"><label>Modelo:</label>'+MODELO+'</div>'
     cHTML += '            <div class="info-item"><label>Cor:</label>'+COR+'</div>'
+    cHTML += '            <div class="info-item"><label>Ano Fab/Mod:</label>'+ANO_FAB_MOD+'</div>'
+    cHTML += '            <div class="info-item"><label>Chassi:</label>'+CHASSI+'</div>'
     cHTML += '            <div class="info-item full-width"><label>Locatário:</label>'+ORGAO_LOCATARIO+' (CNPJ: '+CNPJ_LOCATARIO+')</div>'
     cHTML += '            <div class="info-item full-width"><label>Endereço:</label>'+ENDERECO_LOCATARIO+'</div>'
     cHTML += '        </div>'
@@ -354,33 +366,39 @@ Static Function MontaHTML()
     cHTML += '        <h3>Fundamentação Legal</h3>'
     cHTML += '        <div class="legal-text">'
     cHTML += '            <p>As condutas realizadas pelos prepostos do orgao locatario, configurandom-se em ato ilicito civil, do qual decorre o dever dessa'
-    cHTML += '               de reparar civilmente o dano, nos termos dos Arts. 186 e 927 ambos do Codigo Civil Brasileiro, in verbis:.</p><br>'
-    cHTML += '            <p><strong>Art. 186:</strong> Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, comete ato ilícito.</p><br>'
-    cHTML += '            <p><strong>Art. 927:</strong> Aquele que, por ato ilícito, causar dano a outrem, fica obrigado a repará-lo.</p><br>'
-    cHTML += '            <p>No conceito de Serpa Lopes, o dano patrimonial:</p><br>'
-    cHTML += '            <p>"e o que afeta a um interesse patrimonial, a um bem considerado como de ordem patrimonial,'
-    cHTML += '                tradicionalmente estimavel em dinheiro. Assim, entende-se por dano toda diminuicao do patrimonio'
-    cHTML += '                do credor, quer consistente na perda sofrida (damnum emergens), quer num lucro de que haja sido'
-    cHTML += '                privado (damnum cessans). (Curso de direito civil, v.II, p.387)"</p><br>'
-    cHTML += '            <p><strong>Art. 569:</strong> O locatário é obrigado:'
-    cHTML += '               I - a servir-se da coisa alugada para os usos convencionados, bem como tratá-la com o mesmo cuidado como se sua fosse.</p><br><br>'
+    cHTML += '               de reparar civilmente o dano, nos termos dos Arts. 186 e 927 ambos do Codigo Civil Brasileiro, in verbis:.</p>'
+    cHTML += '              <div class="centralizado">'
+    cHTML += '                  <p><strong>Art. 186:</strong> Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, comete ato ilícito.</p><br>'
+    cHTML += '                  <p><strong>Art. 927:</strong> Aquele que, por ato ilícito, causar dano a outrem, fica obrigado a repará-lo.</p><br>'
+    cHTML += '                  <p>No conceito de Serpa Lopes, o dano patrimonial:</p><br>'
+    cHTML += '                  <p>"e o que afeta a um interesse patrimonial, a um bem considerado como de ordem patrimonial,'
+    cHTML += '                      tradicionalmente estimavel em dinheiro. Assim, entende-se por dano toda diminuicao do patrimonio'
+    cHTML += '                      do credor, quer consistente na perda sofrida (damnum emergens), quer num lucro de que haja sido'
+    cHTML += '                      privado (damnum cessans). (Curso de direito civil, v.II, p.387)"</p><br>'
+    cHTML += '                  <p><strong>Art. 569:</strong> O locatário é obrigado:<br><br>'
+    cHTML += '               I - a servir-se da coisa alugada para os usos convencionados, bem como tratá-la com o mesmo cuidado como se sua fosse.</p>'
+    cHTML += '          </div>'
     cHTML += '        </div>'
 
-    // Assinaturas
-    cHTML += '        <div class="signature-area">'
-    cHTML += '            <div><br><br>'
-    cHTML += '                <div class="signature-line"></div>'
-    cHTML += '                <span style="font-size:10px">'+RESPONSAVEL_SINISTRO_LABEL+'</span>'
-    cHTML += '            </div>'
-    cHTML += '            <div><br><br>'
-    cHTML += '                <div class="signature-line"></div>'
-    cHTML += '                <span style="font-size:10px">'+GERENTE_RESPONSAVEL_LABEL+'</span>'
-    cHTML += '            </div>'
-    cHTML += '        </div>'
+    // Assinaturas com texto ACIMA da linha
+    cHTML += '         <div class="signature-area">'
+    cHTML += '             <div class="signature-box">'
+    cHTML += '                 <div style="height: 40px;"></div>' // Espaço para assinatura
+    cHTML += '                 <div class="signature-line"></div>'
+    cHTML += '                 <span style="font-size:10px">RESPONSAVEL PELO SINISTRO</span>'
+    cHTML += '                 <span style="font-size:9px">'+RESPONSAVEL_SINISTRO_LABEL+'</span>'
+    cHTML += '             </div>'
+    cHTML += '             <div class="signature-box">'
+    cHTML += '                 <div style="height: 40px;"></div>' // Espaço para assinatura
+    cHTML += '                 <div class="signature-line"></div>'
+    cHTML += '                 <span style="font-size:10px">GERENTE RESPONSAVEL</span>'
+    cHTML += '                 <span style="font-size:9px">'+GERENTE_RESPONSAVEL_LABEL+'</span>'
+    cHTML += '             </div>'
+    cHTML += '         </div>'
 
     // Rodapé
     cHTML += '        <div class="footer">'
-    cHTML += '            <p>'+EMPRESA_RODAPE+' (CNPJ: '+CNPJ_UNIDADE_RODAPE+')</p>'
+    // cHTML += '            <p>'+EMPRESA_RODAPE+' (CNPJ: '+CNPJ_UNIDADE_RODAPE+')</p>'
     cHTML += '        </div>'
     cHTML += '    </div>'
     cHTML += ' </body>'
