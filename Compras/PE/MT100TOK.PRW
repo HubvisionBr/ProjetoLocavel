@@ -14,7 +14,11 @@ Local lBloqNFE  := GetMv("LV_XBLQNFE")    // MV_XBLQNFE - Lógico, conteúdo .T. (
 Local lRet      :=.T.
 Local aArea     := FwGetArea()
 Local _nPos     := aScan(aHeader,{|x|UPPER(Alltrim(x[2])) == "D1_PEDIDO"})
+Local _nPC      := aScan(aHeader,{|x|UPPER(AllTrim(x[2])) == "D1_TOTAL"})
+Local cNumSc7   := ""
 Local i         := 0
+Local nTotNF    := 0
+Local nTotPC    := 0
 Local  _dPedido := CTOD("  /  /  ")
 
 If lBloqNFE
@@ -24,8 +28,8 @@ If lBloqNFE
 		If !aCols[n][Len(aHeader)+1]  // Não considera quando a linha está deletada
 			
 			dbSelectArea("SC7")
-
-			If dbSeek(xFilial("SC7")+aCols[1][GdFieldPos("D1_PEDIDO")])
+			SC7->(DbSetOrder(1))//C7_FILIAL+C7_NUM+C7_ITEM+C7_SEQUEN
+			If dbSeek(xFilial("SC7")+aCols[1][GdFieldPos("D1_PEDIDO")]+aCols[1][GdFieldPos("D1_ITEMPC")])
 				
 				// Verifica a Data de Emissão da Nota em relação à Data de Emissão do Pedido de Compras
 						
@@ -57,10 +61,22 @@ If lBloqNFE
 							Exit							
 						EndIf
 					EndIf
+					// Soma total dos itens da NF
+					nTotNF += aCols[i][_nPC]
+					nTotPC += SC7->C7_TOTAL
+					cNumSc7 := SC7->C7_NUM
 				EndIf
 			EndIf
 		EndIf
 	Next
+	// Verifica se o Valor Total da NF que está sendo incluída é maior do que o Valor Total do Pedido de Compra						
+	If nTotNF > nTotPC
+		FWAlertWarning("A NF Nº " + M->cNFiscal + " está com o Valor Total maior do que o Pedido de Compra Nº "+ cNumSc7 + CHR(13) + CHR(10) +;
+						CHR(13) + CHR(10) + "Verifique antes de Incluir a Nota", "Atenção")
+		lRet := .F. 
+	Else
+		lRet := .T.   
+	EndIf	
 EndIf
 
 FwRestArea(aArea)
