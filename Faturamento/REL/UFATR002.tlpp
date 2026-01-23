@@ -11,6 +11,7 @@ User Function UFATR002()
     Private cHTML     := ""
     Private nTotPeca  := 0
     Private nTotServ  := 0
+    Private cAliasSTL := GetNextAlias()
 
     cOSDe  := STJ->TJ_ORDEM
     cOSAté := STJ->TJ_ORDEM
@@ -21,7 +22,7 @@ User Function UFATR002()
 Return
 
 Static Function MontaQuery(cDe, cAté)
-    cQuery := " SELECT STJ.TJ_FILIAL, STJ.TJ_ORDEM, STJ.TJ_CODBEM, STJ.TJ_POSCONT, STJ.TJ_TERMINO, TJ_DTMRINI, TJ_HOMRINI,"
+    cQuery := " SELECT STJ.TJ_FILIAL, STJ.TJ_ORDEM, STJ.TJ_CODBEM, STJ.TJ_POSCONT, STJ.TJ_TERMINO, TJ_DTMRINI, TJ_HOMRINI, TJ_USUARIO, "
     cQuery += " ST9.T9_PLACA, ST9.T9_CORVEI, ST9.T9_MODELO, ST9.T9_ANOMOD, ST9.T9_CHASSI, "
     cQuery += " FP0.FP0_XLOCAL, FP0.FP0_CLICGC, FP0.FP0_CLIEND, FP0.FP0_CLIDDD, FP0.FP0_CLITEL"
     cQuery += " FROM " + RetSqlName("STJ") + " STJ "
@@ -31,7 +32,7 @@ Static Function MontaQuery(cDe, cAté)
     cQuery += " WHERE STJ.TJ_FILIAL = '" + xFilial("STJ") + "' "
     cQuery += " AND STJ.TJ_ORDEM >= '" + cDe + "' "
     cQuery += " AND STJ.TJ_ORDEM <= '" + cAté + "' "
-    cQuery += " AND STJ.D_E_L_E_T_ = '' AND ST9.D_E_L_E_T_ = '' AND FPA.D_E_L_E_T_ = '' AND FP0.D_E_L_E_T_ = ''"
+    cQuery += " AND STJ.D_E_L_E_T_ = ' ' AND ST9.D_E_L_E_T_ = ' ' AND FPA.D_E_L_E_T_ = ' ' AND FP0.D_E_L_E_T_ = ' '"
     cQuery := ChangeQuery(cQuery)
 Return
 
@@ -49,13 +50,15 @@ Static Function MontaDados()
         While !(cAliasOS)->(Eof())
             nTotPeca := 0 
             nTotServ := 0
+            // Chama a função que monta a query dos itens da OS
+            QuerySTL((cAliasOS)->TJ_ORDEM)
 
             cHTML += '<div class="container">'
             cHTML += GetCabecalho((cAliasOS)->TJ_ORDEM,(cAliasOS)->TJ_FILIAL)
             cHTML += GetIdentificacao(cAliasOS)
             cHTML += GetRequisicao(cAliasOS)
-            cHTML += GetItensSTL((cAliasOS)->TJ_ORDEM) 
-            cHTML += GetTotais()
+            cHTML += GetItensSTL() 
+            // cHTML += GetTotais()
             cHTML += GetAssinaturas()
             cHTML += '</div>'
             cHTML += '<div style="page-break-after: always; border:none;"></div>'
@@ -101,20 +104,20 @@ Static Function GetCabecalho(cNumOS, cFilOs)
     cRet += '<tr><td colspan="3" style="font-size: 9px;">' 
 
     // Monta o endereço completo usando Posicione para cada campo
-    cRet += AllTrim(Posicione("SM0", 1, cEmpFil, IF(SM0->(FieldPos("M0_ENDENT")) > 0, "M0_ENDENT", "M0_END"))) + ", " 
-    cRet += AllTrim(Posicione("SM0", 1, cEmpFil, IF(SM0->(FieldPos("M0_BAIENT")) > 0, "M0_BAIENT", "M0_BAIRRO"))) + " - " 
-    cRet += AllTrim(Posicione("SM0", 1, cEmpFil, IF(SM0->(FieldPos("M0_CIDENT")) > 0, "M0_CIDENT", "M0_CIDADE"))) + "/" 
-    cRet += Posicione("SM0", 1, cEmpFil, IF(SM0->(FieldPos("M0_ESTENT")) > 0, "M0_ESTENT", "M0_EST")) + '<br>'
+    cRet += AllTrim(Posicione("SM0", 1, cEmpFil, "M0_ENDENT")) + ", " 
+    cRet += AllTrim(Posicione("SM0", 1, cEmpFil, "M0_BAIRENT")) + " - " 
+    cRet += AllTrim(Posicione("SM0", 1, cEmpFil, "M0_CIDENT")) + "/" 
+    cRet += Posicione("SM0", 1, cEmpFil, "M0_ESTENT") + '<br>'
 
     // Busca Telefone
     cRet += 'FONE: ' + AllTrim(Posicione("SM0", 1, cEmpFil, "M0_TEL")) 
     cRet += ' / SITE: www.grupolocavel.com.br</td></tr></table>'
     // cRet += '<table class="header-table"><tr>'
-    // cRet += '<td colspan="2" class="title-box">LOCAVEL LOCAÇÃO DE SERVIÇOS E VEICULOS LTDA<br>'//TODO: Buscar razão social da empresa da OS
-    // cRet += '<span style="font-size: 11px;">CNPJ: 00.388.838/0001-02</span></td>'//TODO: Buscar CNPJ da empresa da OS
+    // cRet += '<td colspan="2" class="title-box">LOCAVEL LOCAÇÃO DE SERVIÇOS E VEICULOS LTDA<br>'
+    // cRet += '<span style="font-size: 11px;">CNPJ: 00.388.838/0001-02</span></td>'
     // cRet += '<td style="text-align:right" class="title-box">O.S. Nº: '+cNumOS+'</td></tr>'
-    // cRet += '<tr><td colspan="3" style="font-size: 9px;">AVENIDA PRESIDENTE DUTRA 347, IMBIRIBEIRA - RECIFE, PE<br>'//TODO: Buscar endereço da empresa da OS
-    // cRet += 'FONE: 3878-1660 / SITE: www.grupolocavel.com.br</td></tr></table>'//TODO: Buscar telefone e site da empresa da OS
+    // cRet += '<tr><td colspan="3" style="font-size: 9px;">AVENIDA PRESIDENTE DUTRA 347, IMBIRIBEIRA - RECIFE, PE<br>'
+    // cRet += 'FONE: 3878-1660 / SITE: www.grupolocavel.com.br</td></tr></table>'
 Return cRet
 
 Static Function GetIdentificacao(cAlias)
@@ -133,7 +136,7 @@ Static Function GetIdentificacao(cAlias)
     cRet += '<tr><td><span class="label">CNPJ:</span>'+cCnpj+'</td>'
     cRet += '<td><span class="label">Hora:</span>'+(cAlias)->TJ_HOMRINI+'</td>'
     cRet += '<td><span class="label">Cor:</span>'+(cAlias)->T9_CORVEI+'</td>'
-    cRet += '<td><span class="label">Solicit. Armazen:</span></td></tr>'//TODO:TL_NUMSA
+    cRet += '<td><span class="label">Solicit. Armazen:</span>'+GetNumSa()+'</td></tr>'
     cRet += '<tr><td><span class="label">Endereço:</span>'+cEnd+'</td>'
     cRet += '<td><span class="label">Fone:</span>'+cFone+'</td>'
     cRet += '<td><span class="label">Marca:</span>'+'</td>'
@@ -148,37 +151,87 @@ Return cRet
 Static Function GetRequisicao(cAlias)
     Local cRet := ""
     cRet += '<table>'
-    cRet += '<tr><td style="width: 50%;"><span class="label">Solicitado por:</span></td><td style="width: 50%;"><span class="label">Tipo de Requisição:</span></td></tr>'//TODO: TJ_USUARIO
+    cRet += '<tr><td style="width: 50%;"><span class="label">Solicitado por:</span>'+Alltrim((cAlias)->TJ_USUARIO)+'</td><td style="width: 50%;"><span class="label">Tipo de Requisição:</span></td></tr>'
     cRet += '<tr><td><span class="label">Requisitante(s):</span></td><td><span class="label">Situação:</span>'+Iif((cAlias)->TJ_TERMINO=="S",'Finalizada','Aberto')+'</td></tr>'
     cRet += '</table>'
 Return cRet
 
-Static Function GetItensSTL(cNumOS)
-    Local cAliasSTL := GetNextAlias()
-    Local cRet      := ""
-    Local cQry      := "SELECT TL_CODIGO, TL_QUANTID FROM " + RetSqlName("STL") 
-    cQry += " WHERE TL_FILIAL = '" + xFilial("STL") + "' AND TL_ORDEM = '"+cNumOS+"' AND D_E_L_E_T_ = '' "
+Static Function QuerySTL(cNumOS)
+    Local cQry      := ""
+
+    cQry := " SELECT "
+    cQry += "     STL.TL_TIPOREG, "
+    cQry += "     STL.TL_CODIGO, "
+    cQry += "     STL.TL_QUANTID, "
+    cQry += "     STL.TL_NUMSA, "
+    // Lógica para decidir de onde vem a descrição (SB1 ou SA2)
+    cQry += "     CASE "
+    cQry += "         WHEN STL.TL_TIPOREG = 'P' THEN SB1.B1_DESC "
+    cQry += "         WHEN STL.TL_TIPOREG IN ('T', 'M') THEN SA2.A2_NOME "
+    cQry += "         ELSE 'TIPO NAO IDENTIFICADO' "
+    cQry += "     END AS NOME_INSUMO "
     
-    dbUseArea(.T., "TOPCONN", TCGENQRY(,,cQry), cAliasSTL, .F., .T.)
+    cQry += " FROM " + RetSqlName("STL") + " STL "
+    
+    // Join com Produtos (Busca B1_DESC se for Produto)
+    cQry += " LEFT JOIN " + RetSqlName("SB1") + " SB1 ON "
+    cQry += "     SB1.B1_FILIAL = '" + xFilial("SB1") + "' "
+    cQry += "     AND SB1.B1_COD = STL.TL_CODIGO "
+    cQry += "     AND SB1.D_E_L_E_T_ = ' ' "
+    
+    // Join com Fornecedores (Busca A2_NOME se for Terceiro/Mão de Obra)
+    cQry += " LEFT JOIN " + RetSqlName("SA2") + " SA2 ON "
+    cQry += "     SA2.A2_FILIAL = '" + xFilial("SA2") + "' "
+    cQry += "     AND SA2.A2_COD = STL.TL_CODIGO "
+    cQry += "     AND SA2.A2_LOJA = STL.TL_LOJA " 
+    cQry += "     AND SA2.D_E_L_E_T_ = ' ' "
+    
+    cQry += " WHERE "
+    cQry += "     STL.TL_FILIAL = '" + xFilial("STL") + "' "
+    cQry += "     AND STL.TL_ORDEM = '" + cNumOS + "' "
+    cQry += "     AND STL.D_E_L_E_T_ = ' ' "
+    
+    // Execução da Query
+    dbUseArea(.T., "TOPCONN", TCGenQry(,,cQry), cAliasSTL, .F., .T.)
+
+Return cAliasSTL
+
+Static Function GetNumSa()
+    Local cRet := ""
+    (cAliasSTL)->(DbGoTop())
+    While !(cAliasSTL)->(Eof())
+        If !Empty((cAliasSTL)->TL_NUMSA)
+            cRet := Alltrim((cAliasSTL)->TL_NUMSA)
+            Exit
+        EndIf
+        (cAliasSTL)->(dbSkip())
+    EndDo
+Return cRet
+
+Static Function GetItensSTL(cNumOS)
+    Local cRet      := ""
     
     cRet := '<table><tr><td colspan="5" class="section-title">Itens da Ordem de Serviço (Produtos e Serviços)</td></tr>'
-    cRet += '<tr class="bg-gray"><td style="width: 10%;"><span class="label">Código</span></td><td><span class="label">Descrição</span></td><td style="width: 10%;"><span class="label">Qtd</span></td><td style="width: 15%;"><span class="label">Vlr. Unit</span></td><td style="width: 15%;" class="text-right"><span class="label">Valor Total</span></td></tr>'
+    // cRet += '<tr class="bg-gray"><td style="width: 10%;"><span class="label">Código</span></td><td><span class="label">Descrição</span></td><td style="width: 10%;"><span class="label">Qtd</span></td><td style="width: 15%;"><span class="label">Vlr. Unit</span></td><td style="width: 15%;" class="text-right"><span class="label">Valor Total</span></td></tr>'
+    cRet += '<tr class="bg-gray"><td style="width: 10%;"><span class="label">Código</span></td><td><span class="label">Descrição</span></td><td style="width: 10%;"><span class="label">Qtd</span></td></tr>'
+    
+    (cAliasSTL)->(DbGoTop())
     
     While !(cAliasSTL)->(Eof())
         cRet += '<tr>'
         cRet += '<td>'+(cAliasSTL)->TL_CODIGO+'</td>'
-        cRet += '<td>'+Posicione("SB1",1,FwxFilial("SB1")+PADR((cAliasSTL)->TL_CODIGO,TamSx3("B1_COD")[1]),"B1_DESC")+'</td>'
+        cRet += '<td>'+(cAliasSTL)->NOME_INSUMO+'</td>'
         cRet += '<td>'+cValToChar((cAliasSTL)->TL_QUANTID)+'</td>'
-        cRet += '<td>'+'</td>'
-        cRet += '<td class="text-right">'+'</td>'
+        // cRet += '<td>'+'</td>'
+        // cRet += '<td class="text-right">'+'</td>'
         cRet += '</tr>'
         // nTotPeca += (cAliasSTL)->TL_VALTOTAL
         (cAliasSTL)->(dbSkip())
     EndDo
     
-    IF nTotPeca == 0
-        cRet += '<tr><td colspan="5" style="text-align:center">Nenhum item encontrado nesta OS</td></tr>'
-    ENDIF
+    // IF nTotPeca == 0
+    //     cRet += '<tr><td colspan="5" style="text-align:center">Nenhum item encontrado nesta OS</td></tr>'
+    // ENDIF
     cRet += '</table>'
     (cAliasSTL)->(dbCloseArea())
 Return cRet
