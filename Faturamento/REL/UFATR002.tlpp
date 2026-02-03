@@ -210,6 +210,7 @@ Static Function QuerySTL(cNumOS)
     cQry += " WHERE "
     cQry += "     STL.TL_FILIAL = '" + xFilial("STL") + "' "
     cQry += "     AND STL.TL_ORDEM = '" + cNumOS + "' "
+    cQry += "     AND STL.TL_SEQRELA = '0' "
     cQry += "     AND STL.D_E_L_E_T_ = ' ' "
     
     // Execução da Query

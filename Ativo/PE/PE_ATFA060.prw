@@ -22,19 +22,20 @@ User Function ATFA060()
             // Envia na inclusão
             If oModelx:GetOperation() == MODEL_OPERATION_UPDATE
                 // Chama a função que envia local para o mobcode
-                enviaTrans(oModelx)
+                // enviaTrans(oModelx)
             EndIf
 		EndIf
 	EndIf
 Return xRet
 
-Static Function enviaTrans(oModelx)
+// Static Function enviaTrans(oModelx)
+User Function enviaTrans(cLocal,cTipo)
     Local cBody := ""
-    Local i := 0
+    // Local i := 0
 
-    For i :=1 to 2
-        SN1->(DbSetOrder(1))
-        If SN1->(DbSeek(xFilial('SN1')+oModelx:GetValue("FNR_CBADES")))            
+    // For i :=1 to 2
+        // SN1->(DbSetOrder(1))
+        // If SN1->(DbSeek(xFilial('SN1')+oModelx:GetValue("FNR_CBADES")))            
             // Cria o corpo JSON
             cBody := '{'
             cBody += '    "task": '
@@ -43,9 +44,11 @@ Static Function enviaTrans(oModelx)
             cBody += '        "tsk_integrationid": null,'
             cBody += '        "stn_id": 30,'
             cBody += '        "age_id": null,'
-            cBody += '        "tea_integrationid": "'+Iif(i==1,oModelx:GetValue("FNR_LOCORI"),oModelx:GetValue("FNR_LOCDES"))+'",'//Enviar codigo do time do mesmo campo de local
+            // cBody += '        "tea_integrationid": "'+Iif(i==1,oModelx:GetValue("FNR_LOCORI"),oModelx:GetValue("FNR_LOCDES"))+'",'//Enviar codigo do time do mesmo campo de local
+            cBody += '        "tea_integrationid": "'+AllTrim(cLocal)+'",'//Enviar codigo do time do mesmo campo de local
             cBody += '        "tsf_id": 1,'
-            cBody += '        "loc_alternativeidentifier": "'+Iif(i==1,oModelx:GetValue("FNR_LOCORI"),oModelx:GetValue("FNR_LOCDES"))+'",'//Enviar código vindo do campo novo de lista
+            // cBody += '        "loc_alternativeidentifier": "'+Iif(i==1,oModelx:GetValue("FNR_LOCORI"),oModelx:GetValue("FNR_LOCDES"))+'",'//Enviar código vindo do campo novo de lista
+            cBody += '        "loc_alternativeidentifier": "'+AllTrim(cLocal)+'",'//Enviar código vindo do campo novo de lista
             cBody += '        "ast_id": null,'
             cBody += '        "tty_id": 33,'//Tranferencia
             cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
@@ -56,13 +59,14 @@ Static Function enviaTrans(oModelx)
             cBody += '        "tsk_technicalinstruction": null,'
             cBody += '        "cf_placa": "'+SN1->N1_CHAPA+'",'
             cBody += '        "cf_chassi": "'+SN1->N1_CODBAR+'",'
-            cBody += '        "cf_tipo": "'+Iif(i==1,"SAIDA","ENTRADA")+'",'
+            // cBody += '        "cf_tipo": "'+Iif(i==1,"SAIDA","ENTRADA")+'",'
+            cBody += '        "cf_tipo": "'+cTipo+'",'
             cBody += '        "cf_modelo": "'+SN1->N1_DESCRIC+'",'
             cBody += '        "cf_marca": ""'
             cBody += '        }'
             cBody += '}'
-        EndIf
+        // EndIf
 
         U_EnvioMobCode(cBody,"task/create")
-    Next
+    // Next
 Return
