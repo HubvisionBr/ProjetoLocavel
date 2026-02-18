@@ -29,7 +29,7 @@ User Function ATFA060()
 Return xRet
 
 // Static Function enviaTrans(oModelx)
-User Function enviaTrans(cLocal,cTipo)
+User Function enviaTrans(cOrigem,cDestino,cTipo)
     Local cBody := ""
     // Local i := 0
 
@@ -45,23 +45,24 @@ User Function enviaTrans(cLocal,cTipo)
             cBody += '        "stn_id": 30,'
             cBody += '        "age_id": null,'
             // cBody += '        "tea_integrationid": "'+Iif(i==1,oModelx:GetValue("FNR_LOCORI"),oModelx:GetValue("FNR_LOCDES"))+'",'//Enviar codigo do time do mesmo campo de local
-            cBody += '        "tea_integrationid": "'+AllTrim(cLocal)+'",'//Enviar codigo do time do mesmo campo de local
+            cBody += '        "tea_integrationid": "'+AllTrim(cOrigem)+'",'//Enviar codigo do time do mesmo campo de local
             cBody += '        "tsf_id": 1,'
             // cBody += '        "loc_alternativeidentifier": "'+Iif(i==1,oModelx:GetValue("FNR_LOCORI"),oModelx:GetValue("FNR_LOCDES"))+'",'//Enviar código vindo do campo novo de lista
-            cBody += '        "loc_alternativeidentifier": "'+AllTrim(cLocal)+'",'//Enviar código vindo do campo novo de lista
+            cBody += '        "loc_alternativeidentifier": "'+AllTrim(cOrigem)+'",'//Enviar código vindo do campo novo de lista
             cBody += '        "ast_id": null,'
             cBody += '        "tty_id": 33,'//Tranferencia
             cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
             cBody += '        "tsk_schedulefinaldatehour": null,'
             // cBody += '        "tsk_observation": "Chassi - '+SN1->N1_CHASSIS+'",'
-            cBody += '        "tsk_observation": "TRANSFERENCIA DE FILIAL - PLACA: '+AllTrim(SN1->N1_CHAPA)+' CHASSI: '+AllTrim(SN1->N1_CODBAR)+'",'
+            cBody += '        "tsk_observation": "TRANSFERENCIA DE FILIAL - PLACA: '+AllTrim(ST9->T9_CHAPA)+' CHASSI: '+AllTrim(ST9->T9_CHASSI)+'",'
             cBody += '        "tsk_priority": null,'
             cBody += '        "tsk_technicalinstruction": null,'
-            cBody += '        "cf_placa": "'+SN1->N1_CHAPA+'",'
-            cBody += '        "cf_chassi": "'+SN1->N1_CODBAR+'",'
+            cBody += '        "cf_placa": "'+ST9->T9_CHAPA+'",'
+            cBody += '        "cf_chassi": "'+ST9->T9_CHASSI+'",'
             // cBody += '        "cf_tipo": "'+Iif(i==1,"SAIDA","ENTRADA")+'",'
             cBody += '        "cf_tipo": "'+cTipo+'",'
-            cBody += '        "cf_modelo": "'+SN1->N1_DESCRIC+'",'
+            cBody += '        "cf_modelo": "'+ST9->T9_NOME+'",'
+            cBody += '        "cf_dest": "'+cDestino+'",'
             cBody += '        "cf_marca": ""'
             cBody += '        }'
             cBody += '}'
