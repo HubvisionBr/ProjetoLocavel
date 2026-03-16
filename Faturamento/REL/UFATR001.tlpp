@@ -105,7 +105,8 @@ Static Function MontaQuery()
 		cQuery += " ,TRV.TRV_CODMOT "
 	Endif
 	cQuery += " FROM " + RetSqlName("TRH")+" TRH, " + RetSqlName("ST9")+" ST9 "
-    cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON FPA.FPA_XPLACA = ST9.T9_CODBEM AND FPA.D_E_L_E_T_ = ' ' "
+    // cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON FPA.FPA_XPLACA = ST9.T9_CODBEM AND FPA.D_E_L_E_T_ = ' ' "
+    cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON FPA.FPA_GRUA = ST9.T9_CODBEM AND FPA.D_E_L_E_T_ = ' ' "
     cQuery += " LEFT JOIN " + RetSqlName("FP0") + " FP0 ON FPA_FILIAL||FPA_PROJET = FP0_FILIAL||FP0_PROJET AND FP0_STATUS = '5' AND FP0.D_E_L_E_T_ = ' ' "
 	If lOper .AND.	!Empty(MV_PAR06)
 		cQuery += ", " + RetSqlName("TSZ")+" TSZ "
@@ -216,7 +217,7 @@ Static Function MontaDados()
                     UF_SINISTRO         := AllTrim((cAliasTRH)->TRH_UFACID)
                     // Veículo e Contrato
                     PLACA               := AllTrim((cAliasTRH)->TRH_PLACA)
-                    CONTRATO_NO         := AllTrim(FP0->FP0_XLOCAL)
+                    CONTRATO_NO         := AllTrim((cAliasTRH)->FP0_XLOCAL)
                     MARCA               := ""
                     MODELO              := AllTrim((cAliasTRH)->T9_MODELO)
                     COR                 := AllTrim((cAliasTRH)->T9_CORVEI)
