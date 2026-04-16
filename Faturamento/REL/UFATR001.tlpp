@@ -97,27 +97,36 @@ Static Function MontaQuery()
 
     cQuery := " SELECT TRH.*, "
 	cQuery += " ST9.*,  "
-    cQuery += " FP0.FP0_XLOCAL "
+    cQuery += " FP0.FP0_XLOCAL, "
+    cQuery += " TRO.TRO_MOTVEI "
 	If lOper .AND.	!Empty(MV_PAR06)
 		cQuery += ",TSZ.TSZ_CODSER "
 	Endif
 	If !Empty(MV_PAR05)
 		cQuery += " ,TRV.TRV_CODMOT "
 	Endif
-	cQuery += " FROM " + RetSqlName("TRH")+" TRH, " + RetSqlName("ST9")+" ST9 "
+	// cQuery += " FROM " + RetSqlName("TRH")+" TRH, " + RetSqlName("ST9")+" ST9 "
+	cQuery += " FROM " + RetSqlName("TRH")+" TRH "
+    cQuery += " INNER JOIN " + RetSqlName("ST9") + " ST9 ON (TRH.TRH_CODBEM = ST9.T9_CODBEM) AND ST9.D_E_L_E_T_ <> '*' "
     // cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON FPA.FPA_XPLACA = ST9.T9_CODBEM AND FPA.D_E_L_E_T_ = ' ' "
     cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON FPA.FPA_GRUA = ST9.T9_CODBEM AND FPA.D_E_L_E_T_ = ' ' "
     cQuery += " LEFT JOIN " + RetSqlName("FP0") + " FP0 ON FPA_FILIAL||FPA_PROJET = FP0_FILIAL||FP0_PROJET AND FP0_STATUS = '5' AND FP0.D_E_L_E_T_ = ' ' "
-	If lOper .AND.	!Empty(MV_PAR06)
-		cQuery += ", " + RetSqlName("TSZ")+" TSZ "
+	cQuery += " LEFT JOIN " + RetSqlName("TRO") + " TRO ON TRH_FILIAL = TRO_FILIAL AND TRH_NUMSIN = TRO_NUMSIN AND TRH_PLACA = TRO_PLACA AND TRO.D_E_L_E_T_ = ' ' "
+    If lOper .AND.	!Empty(MV_PAR06)
+		// cQuery += ", " + RetSqlName("TSZ")+" TSZ "
+        cQuery += " LEFT JOIN " + RetSqlName("TSZ") + " TSZ ON TSZ.TSZ_CODSER = '"+MV_PAR06+"'"
+        cQuery += " AND TSZ.D_E_L_E_T_ <> '*' "
 		If !Empty(MV_PAR06)
-			cQuery += ", " + RetSQLName(vCampoCC[1])+" D "
+			// cQuery += ", " + RetSQLName(vCampoCC[1])+" D "
+            cQuery += " LEFT JOIN " + RetSqlName(vCampoCC[1]) + " D ON D." + vCampoCC[3] + " = TSZ.TSZ_CODSER "
+            cQuery += " AND D.D_E_L_E_T_ <> '*' "
 		Endif
 	Endif
 	If !Empty(MV_PAR05)
 		cQuery += ", "  + RetSqlName("TRV")+" TRV "
 	Endif
-	cQuery += " WHERE TRH.TRH_CODBEM = ST9.T9_CODBEM "
+	// cQuery += " WHERE TRH.TRH_CODBEM = ST9.T9_CODBEM "
+	cQuery += " WHERE TRH.D_E_L_E_T_ <> '*' "
 
 	// If NGSX2MODO("ST9") == NGSX2MODO("TRH")
 	If FWModeAccess("ST9",1)+FWModeAccess("ST9",2)+FWModeAccess("ST9",3) == FWModeAccess("TRH",1)+FWModeAccess("TRH",2)+FWModeAccess("TRH",3)
@@ -127,8 +136,8 @@ Static Function MontaQuery()
 		cQuery += " AND ST9.T9_FILIAL = '"+xFilial("ST9")+"'"
 	EndIf
 
-	cQuery += " AND   TRH.D_E_L_E_T_ <> '*' "
-	cQuery += " AND   ST9.D_E_L_E_T_ <> '*' "
+	// cQuery += " AND   TRH.D_E_L_E_T_ <> '*' "
+	// cQuery += " AND   ST9.D_E_L_E_T_ <> '*' "
 	If !Empty(MV_PAR01)
 		cQuery += " AND TRH.TRH_NUMSIN  = '"+MV_PAR02+"'"
 		cQuery += " AND TRH.TRH_FILIAL  = '"+MV_PAR01+"'"
@@ -141,12 +150,12 @@ Static Function MontaQuery()
 	If !Empty(MV_PAR04)
 		cQuery += " AND TRH.TRH_DTACID  <= '"+DTOS(MV_PAR04)+"'"
 	Endif
-	If lOper .AND.	!Empty(MV_PAR06)
-		cQuery += " AND D."+vCampoCC[3]+"=TSZ.TSZ_CODSER "
-		cQuery += " AND TSZ.TSZ_CODSER = '"+MV_PAR06+"'"
-		cQuery += " AND D.D_E_L_E_T_ <> '*' "
-		cQuery += " AND TSZ.D_E_L_E_T_ <> '*' "
-	Endif
+	// If lOper .AND.	!Empty(MV_PAR06)
+	// 	cQuery += " AND D."+vCampoCC[3]+"=TSZ.TSZ_CODSER "
+	// 	cQuery += " AND TSZ.TSZ_CODSER = '"+MV_PAR06+"'"
+	// 	cQuery += " AND D.D_E_L_E_T_ <> '*' "
+	// 	cQuery += " AND TSZ.D_E_L_E_T_ <> '*' "
+	// Endif
 	If !Empty(MV_PAR05)
 		cQuery += " AND TRV.TRV_FILIAL = TRH.TRH_FILIAL "
 
@@ -227,7 +236,7 @@ Static Function MontaDados()
                     CNPJ_LOCATARIO      := ""
                     ENDERECO_LOCATARIO  := ""
                     // Condutor
-                    CONDUTOR            := AllTrim(DA4->DA4_NOME)	
+                    CONDUTOR            := AllTrim((cAliasTRH)->TRO_MOTVEI)	
                     HABILITACAO         := AllTrim(DA4->DA4_NUMCNH)
                     ORGAO_HABILITACAO   := ""
                     CATEGORIA_HABILITACAO   := AllTrim(DA4->DA4_CATCNH)
