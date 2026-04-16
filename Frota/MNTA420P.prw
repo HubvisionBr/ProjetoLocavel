@@ -7,6 +7,7 @@ User Function MNTA420P()
     Local aPergs    := {}
     Local aRet      := {}
     Local cLocal    := Space(6)
+    Local cFornece  := ""
     
     aAdd(aPergs, {1, "Local",  cLocal,  "", ".T.", "SNL", ".T.", 80,  .T.})
     
@@ -21,6 +22,12 @@ User Function MNTA420P()
         If ST9->(DbSeek(xFilial('ST9')+M->TJ_CODBEM))   
             // Coleta o local do usuário
             If ParamBox(aPergs, "Informe os parâmetros",@aRet)
+                // Pega o nome do fornecedor
+                cFornece := NOMINSBRW(M->TL_TIPOREG,M->TL_CODIGO,M->TL_LOJA)
+                If Empty(cFornece)
+                    cFornece := AllTrim(POSICIONE("SA2",1,XFILIAL("SA2")+STL->TL_FORNEC+STL->TL_LOJA,"A2_NOME"))
+                EndIf
+                // Monta Json
                 cBody := '{'
                 cBody += '    "task": '
                 cBody += '        {'
@@ -35,7 +42,7 @@ User Function MNTA420P()
                 cBody += '        "tty_id": 34,'//terceiro
                 cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
                 cBody += '        "tsk_schedulefinaldatehour": null,'
-                cBody += '        "tsk_observation": "FORNECEDOR: '+AllTrim(M->TL_CODIGO)+'-'+NOMINSBRW(M->TL_TIPOREG,M->TL_CODIGO,M->TL_LOJA)+' PLACA: '+AllTrim(ST9->T9_PLACA)+' CHASSI: '+AllTrim(ST9->T9_CHASSI)+'",'
+                cBody += '        "tsk_observation": "FORNECEDOR: '+AllTrim(M->TL_CODIGO)+'-'+cFornece+' PLACA: '+AllTrim(ST9->T9_PLACA)+' CHASSI: '+AllTrim(ST9->T9_CHASSI)+'",'
                 cBody += '        "tsk_priority": null,'
                 cBody += '        "tsk_technicalinstruction": null,'
                 cBody += '        "cf_placa": "'+ST9->T9_PLACA+'",'
