@@ -33,7 +33,7 @@ Static Function getQuery()
     cQuery := " SELECT "
     cQuery += "     TRX.TRX_MULTA, TRX.TRX_NUMAIT, TRX.TRX_PLACA, TRX.TRX_DTINFR, TRX.TRX_RHINFR, "
     cQuery += "     TRX.TRX_CODINF, TRX.TRX_DTVECI, TRX.TRX_VALOR, TRX.TRX_PCTDSC, TRX.TRX_DTIND, "
-    cQuery += "     TRX.TRX_CODBEM, TRX.TRX_NF, "
+    cQuery += "     TRX.TRX_CODBEM, TRX.TRX_NF, TRX.TRX_CIDINF, " //Tabela de Notificações/Multas
     cQuery += "     TSH.TSH_DESART AS TRX_DESART, " // Descrição da Infração da tabela TSH
     cQuery += "     FP0.FP0_CLINOM AS NOME_CLI, "
     cQuery += "     FP0.FP0_XLOCAL AS CONTRATO "   // Número do Contrato
@@ -58,24 +58,25 @@ Static Function getQuery()
 
     dbUseArea(.T., "TOPCONN", TCGENQRY(,,cQuery), cAliasRel, .F., .T.)
 
-    If !(cAliasRel)->(Eof())
-        // --- MAPEAMENTO BASEADO NA TABELA TRX ---
+    If !(cAliasRel)->(EoF())
+    
         cDataEmissao := DToC(Date()) + " " + Time()
         cOficio      := (cAliasRel)->TRX_MULTA    
         cNomCli      := (cAliasRel)->NOME_CLI     
-        cCodContr    := (cAliasRel)->CONTRATO     
+      //cCodContr    := (cAliasRel)->CONTRATO     
+        cCodContr    := (cAliasRel)->TRX_CIDINF
         cGestor      := ""
         
-        // --- DADOS DA INFRAÇÃO (CAMPOS TRX) ---
+        // DADOS DA INFRAÇÃO (CAMPOS TRX)
         cCodInfra    := (cAliasRel)->TRX_CODINF   
         cDescInfra   := (cAliasRel)->TRX_DESART   
-        cVeiculo     := (cAliasRel)->TRX_CODBEM   
+        cVeiculo     := (cAliasRel)->TRX_CODBEM
         cPlaca       := (cAliasRel)->TRX_PLACA    
         cDataOcor    := DToC(STOD((cAliasRel)->TRX_DTINFR)) 
         cHoraOcor    := (cAliasRel)->TRX_RHINFR   
         cAIT         := (cAliasRel)->TRX_NUMAIT   
 
-        // --- DADOS FINANCEIROS / PRAZOS (CAMPOS TRX) ---
+        // DADOS FINANCEIROS/PRAZOS (CAMPOS TRX)
         cVencMulta   := DToC(STOD((cAliasRel)->TRX_DTVECI)) 
         nValReal     := (cAliasRel)->TRX_VALOR
         nPercDesc    := (cAliasRel)->TRX_PCTDSC
@@ -93,9 +94,11 @@ Return lRet
 
 // Função para gerar o HTML do relatório
 Static Function getHtml()
-    Local cHtml          := ''
+    Local cHtml           := ''
     Local cFontCourierNew := "'Courier New'"
-    Local lMulta         := TRX->TRX_TPMULT <> "NOTIFICACAO"
+    Local lMulta          := TRX->TRX_TPMULT <> "NOTIFICACAO"
+  //Local cEmpFil         := cEmpAnt
+    Local dDataAtual      := dDataBase
 
     cHtml += ' <meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     cHtml += '<!DOCTYPE html>'
@@ -109,55 +112,55 @@ Static Function getHtml()
     cHtml += '<div class="container">'
     cHtml += '    <header>'
     cHtml += '        <div class="header-left">'
-    cHtml += '            ' + cDataEmissao + '<br>'
-    cHtml += '            ' + Iif(lMulta, "frmCartaMulta", "frmCartaAutuacao") + '<br>'
-    cHtml += '            Página #1'
+  //cHtml += '            ' + cDataEmissao + '<br>'
+  //cHtml += '            ' + IIf(lMulta, "frmCartaMulta", "frmCartaAutuacao") + '<br>'
+  //cHtml += '            Página #1'
     cHtml += '        </div>'
     cHtml += '        <div class="header-center">'
-    cHtml += '            <h1>' + Iif(lMulta, "Carta de Multa Administrativa", "Carta de Autuação") + '</h1>'
+    cHtml += '            <h1>' + IIf(lMulta, "Carta de Multa Administrativa", "Carta de Autuação") + '</h1>'
     cHtml += '        </div>'
     cHtml += '        <div class="logo-container">'
-    cHtml += '            <img src="https://sua-url.com/logo_locavel.png" alt="Logo LOCAVEL" class="logo-image">'
+ // cHtml += '            <img src="https://sua-url.com/logo_locavel.png" alt="Logo LOCAVEL" class="logo-image">'
     cHtml += '        </div>'
     cHtml += '    </header>'
-
     cHtml += '    <div class="document-info">'
-    cHtml += '        Moreno,  16 de março de 2026 <br><br>' // Pode usar uma função de extenso aqui
+    cHtml += '        Moreno (PE), '+ cValtoChar(Day(dDataAtual)) + " de "+ MesExtenso(dDataAtual)+ " de "+ cValtoChar(Year(dDataAtual)) + '<br><br>'
     cHtml += '        Ofício Nº: ' + cOficio + '<br><br>'
     cHtml += '        <strong>' + cNomCli + '</strong><br>'
     cHtml += '        <strong>Contrato: ' + cCodContr + '</strong><br><br>'
-    cHtml += '        Ac.: ' + cGestor
+  //cHtml += '        A/C.: ' + cGestor
     cHtml += '    </div>'
-
     cHtml += '    <div class="subject">'
     cHtml += '        ' + If(lMulta, "REF. PAGAMENTO DE INFRAÇÃO DE TRÂNSITO", "Ref.: Notificação de Autuação por Infração de Trânsito")
     cHtml += '    </div>'
-
     cHtml += '    <div class="content">'
-    cHtml += '        <p>Prezado (a)</p>'
+    cHtml += '        <p>Prezado(a) Sr(a),</p>'
     
     If lMulta
-        // --- CONTEÚDO DINÂMICO: MULTA ---
-        cHtml += '        <p>Por meio desta, viemos lhe informar que estamos emitindo e lhe enviando junto a esta, um boleto de cobrança referente a multa de trânsito ' + cCodInfra + ' - ' + cDescInfra + ', que foi identificada como sendo de sua responsabilidade pela condução do veículo ' + cVeiculo + ' de placa ' + cPlaca + ' ocorrida no dia ' + cDataOcor + ' às ' + cHoraOcor + ' horas conforme AIT: nº ' + cAIT + '.</p>'
-        cHtml += '        <p>Esta responsabilidade se confirma através do contrato Nº ' + cNumFulcro + ' com fulcro na cláusula das obrigações da contratante.</p>'
+        // CONTEÚDO DINÂMICO: MULTA
+        cHtml += '        <p>Por meio desta, viemos lhe informar que estamos emitindo e lhe enviando junto a esta um boleto de cobrança referente a multa de trânsito no Artigo ' + cCodInfra + ' - ' + cDescInfra +', que foi identificada como sendo de sua responsabilidade pela condução do veículo ' + cVeiculo + ' de placa ' + cPlaca + ' ocorrida no dia ' + cDataOcor + ' às ' + cHoraOcor + ' horas conforme AIT: nº ' + cAIT + '.</p>'
+        cHtml += '        <p>Esta responsabilidade se confirma através do Contrato Nº ' + cNumFulcro + ' com fulcro na cláusula das obrigações da contratante.</p>'
         cHtml += '        <p>Informamos que a multa em questão tem vencimento para <strong>' + cVencMulta + '</strong> com o valor de <strong>R$ ' + cValDesc + '</strong>.</p>'
-        cHtml += '        <p>Lembramos que caso a mesma não seja quitada até a data de vencimento, o benefício do desconto de 20% concedido pelo órgão autuador perde a validade, ficando assim o valor integral da multa em R$ ' + cValInt + ' acrescido da taxa administrativa de 0,00 % a ser pago.</p>'
+        cHtml += '        <p>Lembramos que caso a mesma não seja quitada até a data de vencimento, o benefício do desconto de 20% concedido pelo órgão autuador perde a validade, ficando assim o valor integral da multa em R$ ' + cValInt + ' acrescido da taxa administrativa de 0,00 % à ser paga.</p>'
     Else
-        // --- CONTEÚDO DINÂMICO: AUTUAÇÃO ---
-        cHtml += '        <p>Foi apurada uma autuação de infração de trânsito ' + cCodInfra + ' - ' + cDescInfra + ' , no período de locação realizada no veículo ' + cVeiculo + ' de placa ' + cPlaca + ' ocorrida no dia ' + cDataOcor + ' às ' + cHoraOcor + ' horas conforme Nº de AIT: ' + cAIT + '. Fazendo-se necessário a indicação do nome do condutor responsável no prazo até ' + cPrazoIndica + '.</p>'
-        cHtml += '        <p>Conforme previsto no Código Nacional de Transito (Art. 257, parágrafo 7º e 8º) o proprietário do veículo tem o dever de indicar o condutor responsável pelo carro ao Órgão de trânsito competente, sob pena de agravamento da infração, com cobrança de valores adicionais.</p>'
-        cHtml += '        <p>A partir do recebimento deste ofício, o usuário torna-se parte legítima para o exercício de seu direito de defesa, dentro do prazo, junto ao Órgão de Trânsito competente, podendo consultar seu advogado para orientação e como proceder.</p>'
+        // CONTEÚDO DINÂMICO: AUTUAÇÃO
+        cHtml += '        <p>Foi apurada uma autuação de infração de trânsito no Artigo ' + cCodInfra + ' - ' + cDescInfra + ', no período de locação realizada no veículo ' + cVeiculo + ' de placa ' + cPlaca + ' ocorrida no dia ' + cDataOcor + ' às ' + cHoraOcor + 'h conforme Nº de AIT: ' + cAIT + ', fazendo-se necessária a indicação do nome do condutor responsável no prazo até ' + cPrazoIndica + '.</p>'
+        cHtml += '        <p>Conforme previsto no Código Nacional de Trânsito (Art. 257, Parágrafos 7º e 8º), o proprietário do veículo tem o dever de indicar o condutor responsável pelo carro ao Órgão de Trânsito competente, sob pena de agravamento da infração, com cobrança de valores adicionais.</p>'
+        cHtml += '        <p>A partir do recebimento deste ofício, o usuário torna-se parte legítima para o exercício de seu direito de defesa dentro do prazo junto ao Órgão de Trânsito competente, podendo consultar seu advogado para obter orientação como proceder.</p>'
         cHtml += '        <p>Anexo segue o formulário para preenchimento dos dados do condutor infrator ou requerimento para proceder com a defesa caso julgue improcedente a infração apontada.</p>'
     EndIf
 
-    cHtml += '        <p>' + If(lMulta, "Pedimos que em caso de dúvida ou no caso do não recebimento do boleto para pagamento da mesma, entre em contato com setor financeiro.", "Atenciosamente:") + '</p>'
+    cHtml += '        <p>' + If(lMulta, "Pedimos que em caso de dúvida ou não recebimento do boleto para pagamento da mesma entrar em contato com o nosso setor financeiro.", "Atenciosamente,") + '</p>'
     cHtml += '    </div>'
-
     cHtml += '    <div class="signature-section">'
     cHtml += '        <div class="signature-info">'
-    cHtml += '            <strong>' + If(lMulta, "Matriz - Locavel", "Locavel Locação de Veículos e Serviços LTDA.") + '</strong><br>'
-    cHtml += '            João Ferreira<br>'
-    cHtml += '            ' + If(lMulta, "Gerente Financeiro", "Gerente Adm Financeiro")
+  //cRet  += '<td colspan="2" class="title-box">' + AllTrim(Posicione("SM0", 1, cEmpFil, "M0_NOMECOM")) + '<br>'
+  //cHtml += '            <strong>' + If(lMulta, AllTrim(Posicione("SM0", 1, cEmpFil, "M0_NOMECOM")), "") + '</strong><br>'
+    cHtml += '            <strong>' + SM0->M0_FULNAME + '</strong><br>' // Retorna o Nome Completo da Empresa/Filial
+    cHtml += '                                                    <br>'
+    cHtml += '                                                    <br>'
+    cHtml += '            ________________________________________<br>'
+    //cHtml += '            ' + If(lMulta, "Gerente Financeiro", "Gerente Adm Financeiro")
     cHtml += '        </div>'
     // cHtml += '        <div class="signature-box">'
     // cHtml += '            <div style="font-family: '+cFontCourierNew+', monospace; color: blue; transform: rotate(-5deg); font-size: 20px; border: 1px dashed #ccc; padding: 10px;">Assinado</div>'
@@ -165,13 +168,13 @@ Static Function getHtml()
     cHtml += '    </div>'
 
     cHtml += '    <footer>'
-    cHtml += '        Locavel Locação de Veículos E Serviços Ltda<br>'
-    cHtml += '        Avenida Presidente Vargas, 164 &nbsp;&nbsp;&nbsp; 54800000 &nbsp;&nbsp;&nbsp; Bonança &nbsp;&nbsp;&nbsp; Moreno &nbsp;&nbsp;&nbsp; PE &nbsp;&nbsp;&nbsp; 00388838000102'
+    //cHtml += '        Locavel Locação de Veículos e Serviços Ltda.<br>'
+    //cHtml += '        Avenida Presidente Vargas, 164 &nbsp;&nbsp;&nbsp; 54800000 &nbsp;&nbsp;&nbsp; Bonança &nbsp;&nbsp;&nbsp; Moreno &nbsp;&nbsp;&nbsp; PE &nbsp;&nbsp;&nbsp; 00388838000102'
     cHtml += '    </footer>'
     cHtml += '</div>'
     cHtml += '</body>'
     cHtml += '</html>'
-return cHtml
+Return cHtml
 
 // Função para gerar o CSS do relatório
 Static Function getCss()
