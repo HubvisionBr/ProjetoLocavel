@@ -25,11 +25,11 @@ If lBloqNFE
 	
 	For i := 1 To Len(aCols)
 
-		If !aCols[n][Len(aHeader)+1]  // Não considera quando a linha está deletada
+		If !aCols[i][Len(aHeader)+1]  // Não considera quando a linha está deletada
 			
 			dbSelectArea("SC7")
 			SC7->(DbSetOrder(1))//C7_FILIAL+C7_NUM+C7_ITEM+C7_SEQUEN
-			If dbSeek(xFilial("SC7")+aCols[1][GdFieldPos("D1_PEDIDO")]+aCols[1][GdFieldPos("D1_ITEMPC")])
+			If dbSeek(xFilial("SC7")+aCols[i][GdFieldPos("D1_PEDIDO")]+aCols[i][GdFieldPos("D1_ITEMPC")])
 				
 				// Verifica a Data de Emissão da Nota em relação à Data de Emissão do Pedido de Compras
 						
