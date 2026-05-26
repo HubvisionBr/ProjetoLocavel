@@ -9,13 +9,14 @@ Tabelas: TRX (dados da Notificação de Autuação/Multa), FPA (para retornar o Cont
 @type function
 */
 User Function UFATR003()
+
     Local cRel := ""
     Private cAliasRel := GetNextAlias()
     Private cDataEmissao, cOficio, cNomCli, cCodContr, cGestor, cCodInfra, cDescInfra, cVeiculo, cPlaca,; 
-        cDataOcor, cHoraOcor, cAIT, cVencMulta, cValDesc, cValInt, cNumFulcro, cPrazoIndica 
+        cDataOcor, cHoraOcor, cAIT, cVencMulta, cValDesc, cValInt, cNumFulcro, cPrazoIndica
 
-    If getQuery()
-        cRel := getHtml()
+    If GetQuery()
+        cRel := GetHtml()
         GeraPdf(cRel)
     EndIf
     
@@ -25,32 +26,38 @@ User Function UFATR003()
 Return
 
 // Função para retornar os dados do relatório 
-Static Function getQuery()
+Static Function GetQuery()
+    
     Local lRet := .F.
     Local cQuery := ""
 
     // Monta a query
     cQuery := " SELECT "
-    cQuery += "     TRX.TRX_MULTA, TRX.TRX_NUMAIT, TRX.TRX_PLACA, TRX.TRX_DTINFR, TRX.TRX_RHINFR, "
+    cQuery += "     TRX.TRX_FILIAL, TRX.TRX_MULTA, TRX.TRX_NUMAIT, TRX.TRX_PLACA, TRX.TRX_DTINFR, TRX.TRX_RHINFR, "
     cQuery += "     TRX.TRX_CODINF, TRX.TRX_DTVECI, TRX.TRX_VALOR, TRX.TRX_PCTDSC, TRX.TRX_DTIND, "
     cQuery += "     TRX.TRX_CODBEM, TRX.TRX_NF, TRX.TRX_CIDINF, " //Tabela de Notificações/Multas
     cQuery += "     TSH.TSH_DESART AS TRX_DESART, " // Descrição da Infração da tabela TSH
     cQuery += "     FP0.FP0_CLINOM AS NOME_CLI, "
-    cQuery += "     FP0.FP0_XLOCAL AS CONTRATO "   // Número do Contrato
+    cQuery += "     FP0.FP0_XLOCAL AS CONTRATO, "   // Número do Contrato
+    cQuery += "     ST9.T9_NOME "   // Nome do veiculo
     cQuery += " FROM " + RetSqlName("TRX") + " TRX "
     
-    // Join com TSH para pegar a descrição amigável da infração
-    cQuery += " LEFT JOIN " + RetSqlName("TSH") + " TSH ON "
-    cQuery += "     TSH.TSH_CODINF = TRX.TRX_CODINF AND TSH.D_E_L_E_T_ = ' ' "
+    // Join com TSH para pegar a descrição da Infração
+    cQuery += " LEFT JOIN " + RetSqlName("TSH") + " TSH ON TSH_FILIAL = '"+FwxFilial("TSH")+"' "
+    cQuery += "     AND TSH.TSH_CODINF = TRX.TRX_CODINF AND TSH.D_E_L_E_T_ = ' ' "
     
     // Join com FPA para localizar o contrato vinculado à placa do veículo
     cQuery += " LEFT JOIN " + RetSqlName("FPA") + " FPA ON "
     cQuery += "     FPA.FPA_XPLACA = TRX.TRX_PLACA AND FPA.D_E_L_E_T_ = ' ' "
     
-    // Join com FP0 para pegar os dados do cliente dono do contrato 
+    // Join com FP0 para pegar os dados do Cliente do Contrato 
     cQuery += " LEFT JOIN " + RetSqlName("FP0") + " FP0 ON "
     cQuery += "     FPA_FILIAL||FPA_PROJET = FP0_FILIAL||FP0_PROJET AND FP0_STATUS = '5' AND FP0.D_E_L_E_T_ = ' '"
     
+    // Join com TSH para pegar a descrição da Infração
+    cQuery += " LEFT JOIN " + RetSqlName("ST9") + " ST9 ON "
+    cQuery += "     ST9.T9_CODBEM = TRX.TRX_CODBEM AND ST9.D_E_L_E_T_ = ' ' "
+
     cQuery += " WHERE "
     cQuery += "     TRX.TRX_MULTA = '" + TRX->TRX_MULTA + "' "
     cQuery += "     AND TRX.D_E_L_E_T_ = ' ' "
@@ -70,11 +77,12 @@ Static Function getQuery()
         // DADOS DA INFRAÇÃO (CAMPOS TRX)
         cCodInfra    := (cAliasRel)->TRX_CODINF   
         cDescInfra   := (cAliasRel)->TRX_DESART   
-        cVeiculo     := (cAliasRel)->TRX_CODBEM
-        cPlaca       := (cAliasRel)->TRX_PLACA    
+      //cVeiculo     := (cAliasRel)->TRX_CODBEM
+        cVeiculo     := AllTrim((cAliasRel)->T9_NOME)
+        cPlaca       := (cAliasRel)->TRX_PLACA
         cDataOcor    := DToC(STOD((cAliasRel)->TRX_DTINFR)) 
         cHoraOcor    := (cAliasRel)->TRX_RHINFR   
-        cAIT         := (cAliasRel)->TRX_NUMAIT   
+        cAIT         := (cAliasRel)->TRX_NUMAIT
 
         // DADOS FINANCEIROS/PRAZOS (CAMPOS TRX)
         cVencMulta   := DToC(STOD((cAliasRel)->TRX_DTVECI)) 
@@ -144,7 +152,7 @@ Static Function getHtml()
         cHtml += '        <p>Lembramos que caso a mesma não seja quitada até a data de vencimento, o benefício do desconto de 20% concedido pelo órgão autuador perde a validade, ficando assim o valor integral da multa em R$ ' + cValInt + ' acrescido da taxa administrativa de 0,00 % à ser paga.</p>'
     Else
         // CONTEÚDO DINÂMICO: AUTUAÇÃO
-        cHtml += '        <p>Foi apurada uma autuação de infração de trânsito no Artigo ' + cCodInfra + ' - ' + cDescInfra + ', no período de locação realizada no veículo ' + cVeiculo + ' de placa ' + cPlaca + ' ocorrida no dia ' + cDataOcor + ' às ' + cHoraOcor + 'h conforme Nº de AIT: ' + cAIT + ', fazendo-se necessária a indicação do nome do condutor responsável no prazo até ' + cPrazoIndica + '.</p>'
+        cHtml += '        <p>Foi apurada uma autuação de infração de trânsito no Artigo ' + cCodInfra + ' - ' + cDescInfra + ', no período de locação realizada no veículo' + ' de placa ' + cPlaca + ' ocorrida no dia ' + cDataOcor + ' às ' + cHoraOcor + 'h conforme Nº de AIT: ' + cAIT + ', fazendo-se necessária a indicação do nome do condutor responsável no prazo até ' + cPrazoIndica + '.</p>'
         cHtml += '        <p>Conforme previsto no Código Nacional de Trânsito (Art. 257, Parágrafos 7º e 8º), o proprietário do veículo tem o dever de indicar o condutor responsável pelo carro ao Órgão de Trânsito competente, sob pena de agravamento da infração, com cobrança de valores adicionais.</p>'
         cHtml += '        <p>A partir do recebimento deste ofício, o usuário torna-se parte legítima para o exercício de seu direito de defesa dentro do prazo junto ao Órgão de Trânsito competente, podendo consultar seu advogado para obter orientação como proceder.</p>'
         cHtml += '        <p>Anexo segue o formulário para preenchimento dos dados do condutor infrator ou requerimento para proceder com a defesa caso julgue improcedente a infração apontada.</p>'

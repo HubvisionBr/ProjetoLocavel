@@ -3,10 +3,10 @@
 
 /*
 {Protheus.doc} UFATR002
-Relatorio de Ordem de Servico - Layout Fiel LOCAVEL
-Tabelas: STJ (OS), STL (Itens), ST9 (Bens)
+Relatório de Ordem de Serviço - Layout Fiel LOCAVEL
+Tabelas: STJ (OS), STL (Itens da OS), ST9 (Veículos), FP0 (Projetos - Rental), FPA (Locação x Projeto - Rental)
 @since JAN/2026
-@type function
+@type Function
 */
 User Function UFATR002()
     
@@ -171,7 +171,6 @@ Static Function GetIdentificacao(cAlias)
     cRet += '<td><span class="label">Modelo</span>'+Posicione('SB1',1, FWxFilial('SB1')+(cAlias)->T9_CODESTO,"B1_DESC")+'</td></tr>'
     cRet += '<tr><td colspan="2"><span class="label">Informações Adicionais</span></td><td><span class="label">Ano Fabricação/Ano Modelo</span>'+(cAlias)->T9_ANOFAB+"/"+(cAlias)->T9_ANOMOD+'</td>'
     cRet += '<td><span class="label">Chassi</span>'+(cAlias)->T9_CHASSI+'</td></tr>'
-    // cRet += '<td><span class="label">Observações</span>'+StrTran(cObsOs, CHR(13)+CHR(10), "<br>")+'</td></tr>'
     cRet += '<tr><td colspan="4"><span class="label">Observações</span>'+StrTran(cObsOs, CHR(13)+CHR(10), "<br>")+'</td></tr>'
     cRet += '</table>'
 Return cRet
@@ -254,9 +253,10 @@ Static Function GetInfo()
 Return
 
 Static Function GetItensSTL(cNumOS)
+
     Local cRet := ""
     
-    cRet := '<table><tr><td colspan="5" class="section-title">Itens da Ordem de Serviço (Recursos/Produtos/Serviços)</td></tr>'
+    cRet := '<table><tr><td colspan="5" class="section-title">Itens da OS (Recursos/Peças/Serviços)</td></tr>'
     // cRet += '<tr class="bg-gray"><td style="width: 10%;"><span class="label">Código</span></td><td><span class="label">Descrição</span></td><td style="width: 10%;"><span class="label">Qtd</span></td><td style="width: 15%;"><span class="label">Vlr. Unit</span></td><td style="width: 15%;" class="text-right"><span class="label">Valor Total</span></td></tr>'
     cRet += '<tr class="bg-gray"><td style="width: 10%;"><span class="label">Código</span></td><td><span class="label">Descrição</span></td><td style="width: 10%;"><span class="label">Quantidade</span></td><td style="width: 10%;"><span class="label">Unidade</span></td></tr>'
     
@@ -274,9 +274,9 @@ Static Function GetItensSTL(cNumOS)
         (cAliasSTL)->(dbSkip()) 
     EndDo
     
-    // IF nTotPeca == 0
+    // If nTotPeca == 0
     //     cRet += '<tr><td colspan="5" style="text-align:center">Nenhum item encontrado nesta OS</td></tr>'
-    // ENDIF
+    // EndIf
     cRet += '</table>'
     (cAliasSTL)->(dbCloseArea())
 Return cRet

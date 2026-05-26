@@ -1,0 +1,369 @@
+#Include 'Protheus.ch'
+#Include 'TopConn.ch'
+
+/*
+{Protheus.doc} UFATR004
+Relatório Contrato de Compra e Venda de Veículo Usado à Vista - Layout LOCASERVICE
+Tabelas: [Espaço reservado para definição das tabelas do banco]
+@since Maio/2026
+@type function
+*/
+User Function UFATR004()
+
+    Local cRel := ""
+    Private cAliasRel := GetNextAlias()
+    
+    // VARIÁVEIS PRIVADAS - DADOS DO VENDEDOR E REPRESENTANTES
+    Private cVendNom, cVendCNPJ, cVendEnd, cVendDir1, cVendRG1, cVendCPF1, cVendRes1, cVendDir2, cVendRG2, cVendCPF2, cVendRes2
+    
+    // VARIÁVEIS PRIVADAS - DADOS DO COMPRADOR
+    Private cCompNom, cCompCPF, cCompEnd
+    
+    // VARIÁVEIS PRIVADAS - DADOS DO VEÍCULO
+    Private cVeicNome, cVeicMarca, cVeicAno, cVeicPlaca, cVeicRenavam, cVeicChassis, cVeicCor, cVeicHodo, cVeicValor
+    
+    // VARIÁVEIS PRIVADAS - DADOS DE PAGAMENTO E PRAZOS
+    Private cValContr, cDataVenc, cForoComarca
+
+    If GetQuery()
+        cRel := GetHtml()
+        GeraPdf(cRel)
+    EndIf
+    
+    If Select(cAliasRel) > 0
+        (cAliasRel)->(DbCloseArea())
+    EndIf
+Return
+
+// Função para retornar os dados do relatório (Query reservada)
+Static Function GetQuery()
+    Local lRet := .F.
+    Local cQuery := ""
+
+    cQuery := " SELECT * "
+    cQuery += " FROM "+RetSqlName("ST9")+" ST9 "
+    cQuery += " INNER JOIN "+RetSqlName("FN6")+" FN6 ON RTRIM(FN6_CBASE)||FN6_CITEM = T9_CODIMOB "
+    cQuery += " AND FN6_STATUS = '1' "
+    cQuery += " AND FN6 .D_E_L_E_T_ = ' ' "
+    cQuery += " INNER JOIN "+RetSqlName("SA1")+" SA1 ON A1_COD = FN6_CLIENT "
+    cQuery += " AND A1_LOJA = FN6_LOJA "
+    cQuery += " AND SA1 .D_E_L_E_T_ = ' ' "
+    cQuery += " INNER JOIN "+RetSqlName("SE1")+" SE1 ON E1_FILIAL = FN6_FILIAL "
+    cQuery += " AND E1_PREFIXO = FN6_SERIE "
+    cQuery += " AND E1_NUM = FN6_NUMNF "
+    cQuery += " AND E1_CLIENTE = FN6_CLIENT "
+    cQuery += " AND E1_LOJA = FN6_LOJA "
+    cQuery += " AND SE1 .D_E_L_E_T_ = ' ' "
+    cQuery += " WHERE T9_CODIMOB = '20PR0022480001' "
+    cQuery += " AND FN6_CLIENT <> '' "
+    cQuery += " AND ST9.D_E_L_E_T_ = ' ' "
+    cQuery := ChangeQuery(cQuery)
+    dbUseArea(.T., "TOPCONN", TCGENQRY(,,cQuery), cAliasRel, .F., .T.)
+
+    // Simulação de posicionamento/retorno positivo para geração do layout provisório
+    // Quando implementar a query oficial, descomente a verificação do EoF() abaixo
+    If !(cAliasRel)->(EoF())
+    
+        // 1. Atribuição - Dados do Vendedor
+        cVendNom    := "///////TODO///////"//"LOCAVEL BUS - JOAO PESSOA"
+        cVendCNPJ   := "///////TODO///////"//"03.776.266/0010-00"
+        cVendEnd    := "///////TODO///////"//"AV. GOV. ARGEMIRO DE FIGUEIREDO, CXP 734, 210, JARDIM OCEANIA, João Pessoa/PB, CEP: 58037030"
+        
+        // Diretor 1
+        cVendDir1   := "NILDO DA SILVA MACHADO PEDROSA"
+        cVendRG1    := "2.193.594 SSP/PE"
+        cVendCPF1   := "267.227.554-87"
+        cVendRes1   := "Recife/PE"
+        
+        // Diretor 2
+        cVendDir2   := "DANILO RICARDO PAES BARRETO DE ARRUDA CÂMARA"
+        cVendRG2    := "1.703.087 SSP/PE"
+        cVendCPF2   := "235.140.604-44"
+        cVendRes2   := "Recife/PE"
+
+        // 2. Atribuição - Dados do Comprador
+        cCompNom    := AllTrim((cAliasRel)->A1_NOME)
+        cCompCPF    := AllTrim((cAliasRel)->A1_CGC)
+        cCompEnd    := AllTrim((cAliasRel)->A1_END) + ", " + AllTrim((cAliasRel)->A1_BAIRRO) + ", " + AllTrim((cAliasRel)->A1_MUN) + "/" + AllTrim((cAliasRel)->A1_EST)
+
+        // 3. Atribuição - Dados do Veículo
+        cVeicNome   := AllTrim((cAliasRel)->T9_NOME )
+        cVeicMarca  := AllTrim((cAliasRel)->T9_FABRICA)
+        cVeicAno    := DTOC(STOD((cAliasRel)->T9_ANOFAB))
+        cVeicPlaca  := AllTrim((cAliasRel)->T9_PLACA)
+        cVeicRenavam:= AllTrim((cAliasRel)->T9_RENAVAM)
+        cVeicChassis:= AllTrim((cAliasRel)->T9_CHASSI)
+        cVeicCor    := AllTrim((cAliasRel)->T9_CORVEI)
+        cVeicHodo   := "///////TODO///////"//"067.576"
+        cVeicValor  := Transform((cAliasRel)->T9_VALCPA, "@E 9,999,999.99")
+
+        // 4. Atribuição - Dados Financeiros e de Foro
+        cValContr   := Transform((cAliasRel)->E1_VALOR, "@E 9,999,999.99")
+        cDataVenc   := DTOC(STOD((cAliasRel)->E1_VENCREA))
+        cForoComarca:= "///////TODO///////"//"Recife/PE"
+
+        lRet := .T.
+    EndIf
+Return lRet
+
+// Função para gerar o HTML do contrato
+Static Function getHtml()
+    Local cHtml        := ''
+    Local dDataAtual   := dDataBase
+
+    cHtml += '<!DOCTYPE html>'
+    cHtml += '<html lang="pt-br">'
+    cHtml += '<head>'
+    cHtml += '    <meta charset="UTF-8">'
+    cHtml += '    <title>Contrato de Venda de Veículos</title>'
+    cHtml += getCss()
+    cHtml += '</head>'
+    cHtml += '<body>'
+    cHtml += '<div class="container">'
+    
+    // Cabeçalho
+    cHtml += '    <header>'
+    cHtml += '        <div class="header-center">'
+    cHtml += '            <h1>CONTRATO DE VENDA DE VEÍCULOS</h1>'
+    cHtml += '            <h3>CONTRATO DE COMPRA E VENDA DE VEÍCULO USADO A VISTA</h3>'
+    cHtml += '        </div>'
+    cHtml += '    </header>'
+    
+    // Qualificação das Partes
+    cHtml += '    <div class="content">'
+    cHtml += '        <p><strong>VENDEDOR(A):</strong> ' + cVendNom + ', Sociedade empresária, inscrita no CNPJ/MF sob o nº ' + cVendCNPJ + ', com filial na ' + cVendEnd + '. Neste ato representada pelos diretores ' + cVendDir1 + ', brasileiro, casado, empresário, portador do RG sob nº ' + cVendRG1 + ', inscrito no CPF/MF sob o nº ' + cVendCPF1 + ', residente e domiciliado na cidade de ' + cVendRes1 + ' e ' + cVendDir2 + ', brasileiro, casado, engenheiro civil, portador do RG sob o nº ' + cVendRG2 + ', inscrito no CPF/MF sob o nº ' + cVendCPF2 + ', residente e domiciliado na cidade de ' + cVendRes2 + '.</p>'
+    cHtml += '        <p><strong>COMPRADOR(A):</strong> ' + cCompNom + ', brasileiro, portador do CPF/MF sob o nº ' + cCompCPF + ', residente e domiciliado na ' + cCompEnd + '.</p>'
+    cHtml += '        <p>As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Compra e venda de Veículo Usado a Vista, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente instrumento.</p>'
+    
+    // Cláusula 1 e Tabela do Veículo
+    cHtml += '        <div class="section-title">DO OBJETO DO CONTRATO</div>'
+    cHtml += '        <p><strong>Cláusula 1ª.</strong> O presente contrato tem como OBJETO, o veículo de acordo com as especificações relacionadas, de propriedade do VENDEDOR(A), livre de qualquer ônus ou encargo.</p>'
+    
+    cHtml += '        <table class="veiculo-table">'
+    cHtml += '            <thead>'
+    cHtml += '                <tr><th colspan="2">Lista de Veículos</th></tr>'
+    cHtml += '            </thead>'
+    cHtml += '            <tbody>'
+    cHtml += '                <tr><td><strong>Veículo:</strong></td><td>' + cVeicNome + '</td></tr>'
+    cHtml += '                <tr><td><strong>Marca:</strong></td><td>' + cVeicMarca + '</td></tr>'
+    cHtml += '                <tr><td><strong>Ano:</strong></td><td>' + cVeicAno + '</td></tr>'
+    cHtml += '                <tr><td><strong>Placa:</strong></td><td>' + cVeicPlaca + '</td></tr>'
+    cHtml += '                <tr><td><strong>Renavam:</strong></td><td>' + cVeicRenavam + '</td></tr>'
+    cHtml += '                <tr><td><strong>Chassis:</strong></td><td>' + cVeicChassis + '</td></tr>'
+    cHtml += '                <tr><td><strong>Cor:</strong></td><td>' + cVeicCor + '</td></tr>'
+    cHtml += '                <tr><td><strong>Hodômetro:</strong></td><td>' + cVeicHodo + '</td></tr>'
+    cHtml += '                <tr><td><strong>Valor:</strong></td><td>R$ ' + cVeicValor + '</td></tr>'
+    cHtml += '            </tbody>'
+    cHtml += '        </table>'
+    
+    // Cláusulas Restantes
+    cHtml += '        <p><strong>Cláusula 2ª.</strong> O veículo, objeto deste contrato é usado, apresentando desgaste natural decorrente do tempo, já visto e inspecionado pelo COMPRADOR, o qual tomou ciência de suas condições e estado de conservação.</p>'
+    
+    cHtml += '        <div class="section-title">DAS RESPONSABILIDADES</div>'
+    cHtml += '        <p><strong>Cláusula 3ª.</strong> O VENDEDOR(A) se responsabilizará pelo bom estado e perfeito funcionamento do veículo dentro do prazo de 30 dias (trinta), contado a partir da assinatura deste instrumento pelas partes, salientando que a responsabilidade sobre o automóvel administrativa, penal e cível fica sob a responsabilidade do COMPRADOR(A) no ato da efetiva compra e assinatura deste.</p>'
+    cHtml += '        <p><strong>Cláusula 4ª.</strong> O VENDEDOR(A) se obriga a entregar o veículo no local indicado pelo COMPRADOR(a), nas mesmas condições em que se encontrava quando foi por este inspecionado.</p>'
+    
+    cHtml += '        <div class="section-title">DA TRANSFERÊNCIA DA PROPRIEDADE DO VEÍCULO</div>'
+    cHtml += '        <p><strong>Cláusula 5ª.</strong> A transferência da propriedade do veículo será feita no prazo de 30 dias (trinta) após a quitação do valor acertado na compra e venda do automóvel.</p>'
+    cHtml += '        <p><strong>Cláusula 6ª.</strong> A transferência da posse do veículo ocorrerá a partir da assinatura do documento e entrega do bem móvel, onde ocorrerá a entrega das chaves, dos acessórios que acompanham o automóvel/automotor e todos os direitos e deveres.</p>'
+    cHtml += '        <p><strong>Cláusula 7ª.</strong> Se assim desejarem as partes poderão concordar que a entrega seja feita, apenas, quando ocorrer a transferência da propriedade e posse do veículo junto ao DETRAN.</p>'
+    cHtml += '        <p><strong>Cláusula 8ª.</strong> A transferência da propriedade do veículo junto ao DETRAN, ocorrerá em até 30 (trinta) dias contados a partir do dia em que esse documento foi assinado, conforme prevê o art. 123, § 1º do Código de Trânsito Brasileiro.</p>'
+    cHtml += '        <p><strong>Cláusula 9ª.</strong> O COMPRADOR(A) será o responsável pela transferência definitiva do veículo, devendo arcar com o pagamento dos emolumentos e taxas.</p>'
+    cHtml += '        <p><strong>Cláusula 10ª.</strong> Caso o COMPRADOR(A) não realize a transferência do veículo para o seu nome, fica o mesmo responsável por qualquer multa, encargo ou situação que for decorrente da ausência deste ato que é sua responsabilidade.</p>'
+    cHtml += '        <p><strong>Cláusula 11ª.</strong> É infração gravíssima conduzir veículo com licenciamento atrasado, conforme previsão do art. 230, V do Código de Trânsito Brasileiro.</p>'
+    
+    cHtml += '        <div class="section-title">DA OBRIGAÇÕES</div>'
+    cHtml += '        <p><strong>Cláusula 12ª.</strong> O VENDEDOR(A) só se obriga a entregar o bem ao COMPRADOR tão somente após a quitação total do valor acertado na compra e venda do automóvel, ficando as despesas de transferência e registro junto ao órgão, a cargo do COMPRADOR(A).</p>'
+    cHtml += '        <p><strong>Cláusula 13ª.</strong> O VENDEDOR(A) se obriga a entregar o veículo ao COMPRADOR nas mesmas condições em que se encontrava quando foi por este inspecionado.</p>'
+    cHtml += '        <p><strong>Parágrafo primeiro.</strong> A entrega do automóvel dar-se-á no lugar onde se encontrava o bem ao tempo da inspeção feita pelo COMPRADOR(A), ficando o VENDEDOR(A) após a assinatura deste contrato e entrega do automóvel ao COMPRADOR(A), livre de quaisquer ônus ou encargos que venham a incidir sobre o bem, não se responsabilizando por quaisquer problemas verificados no funcionamento, estrutura do veículo ou por quaisquer danos causados ao veículo por negligência do COMPRADOR(A).</p>'
+    cHtml += '        <p><strong>Parágrafo segundo.</strong> Se o automóvel for entregue em local diverso, ou pessoa diversa autorizada/solicitada pelo COMPRADOR(A), o mesmo se responsabilizará pelos riscos de eventuais danos ocasionados ao automóvel.</p>'
+    
+    cHtml += '        <div class="section-title">DA GARANTIA</div>'
+    cHtml += '        <p><strong>Cláusula 14ª.</strong> O COMPRADOR(A) declara para todos os fins de direito que adquiriu o veículo descrito na cláusula 1 na modalidade de repasse, ou seja, abaixo do preço praticado pelo mercado, motivo pelo qual renuncia, desde já, ao direito de futuramente vir a reclamar por qualquer vício/defeito por ventura existente no veículo, em juízo ou fora dele, inclusive.</p>'
+    cHtml += '        <p><strong>Cláusula 15ª.</strong> O COMPRADOR(A) se responsabilizará, após a assinatura deste instrumento, pelos impostos, pagamento da restrição de IPVA da Lei 10.849/1992, taxas, multas ou quaisquer outros encargos e/ou ônus que venham a recair sobre o bem objeto deste contrato. As multas, impostos e taxas não quitados e incidentes sobre o veículo objeto do presente contrato, até a presente data, são de inteira e exclusiva responsabilidade do VENDEDOR, que assume o compromisso de pagar os respectivos montantes e apresentar seus comprovantes ao COMPRADOR no prazo de 5 (cinco) dias, contados a partir da data da assinatura do presente contrato, sob pena de, não o fazendo, declarar-se em moratória perante o COMPRADOR, sujeitando-se às ações cabíveis de cobrança e execução.</p>'
+    cHtml += '        <p><strong>Cláusula 16ª.</strong> O VENDEDOR(A) apresenta, para concretização do negócio, negativa de multa, expedida pelo DETRAN, assumindo a responsabilidade cível e criminal pela autenticidade do respectivo documento. O COMPRADOR(A) declara ter recebido respectivo documento original, lido e de acordo, sem contudo declinar do direito de cobrança dos eventuais encargos mencionados na cláusula anterior.</p>'
+    
+    cHtml += '        <div class="section-title">DO PAGAMENTO</div>'
+    cHtml += '        <p><strong>Cláusula 17ª.</strong> O COMPRADOR(A) pagará ao VENDEDOR(A), pela compra do veículo objeto deste contrato, a quantia de R$ ' + cValContr + ' a ser quitado até o dia ' + cDataVenc + ', mediante pagamento à vista. O COMPRADOR(A) fica ciente que o inadimplemento das obrigações implicará na incidência das sanções previstas na cláusula 18ª.</p>'
+    cHtml += '        <p><strong>Parágrafo único.</strong> No pagamento efetuado por meio de cheque, a quitação dar-se-á tão somente após a efetiva e regular compensação.</p>'
+    cHtml += '        <p><strong>Cláusula 18ª.</strong> Em havendo atraso no pagamento do valor descrito na cláusula anterior, implicará imediatamente na rescisão do presente instrumento, arcando o COMPRADOR(A) com multa compensatória no percentual de 10% (dez por cento) do valor da venda do automóvel, mais juros de 2% (dois por cento) ao mês além da correção monetária.</p>'
+    cHtml += '        <p><strong>Parágrafo único.</strong> O cheque discriminado na cláusula 17ª só será devolvido ao COMPRADOR(A), mediante o pagamento da multa mencionada na cláusula anterior, salvo motivo de caso fortuito ou força maior devidamente comprovado.</p>'
+    
+    cHtml += '        <div class="section-title">DO SIGILO</div>'
+    cHtml += '        <p><strong>Cláusula 19ª.</strong> As partes reconhecem que para os fins deste documento serão considerados confidenciais todas as informações e deverão manter o mais absoluto sigilo a respeito do contrato firmado, bem como não utilizar ou repassar informações confidenciais.</p>'
+    
+    cHtml += '        <div class="section-title">DO FORO</div>'
+    cHtml += '        <p><strong>Cláusula 20ª.</strong> Para dirimir quaisquer controvérsias oriundas do CONTRATO, as partes elegem o foro da comarca de ' + cForoComarca + '.</p>'
+    
+    cHtml += '        <p class="final-text">Por estarem assim justos e contratados, firmam o presente instrumento, em duas vias de igual teor, juntamente com 2 (duas) testemunhas. Os contratantes devem reconhecer firma em Cartório.</p>'
+    cHtml += '    </div>'
+    
+    // Seção de Assinaturas
+    cHtml += '    <div class="signature-section">'
+    cHtml += '        <div class="signature-box">'
+    cHtml += '            <div class="line"></div>'
+    cHtml += '            <p><strong>' + cVendNom + '</strong><br>Vendedor(a)<br>CNPJ: ' + cVendCNPJ + '</p>'
+    cHtml += '        </div>'
+    cHtml += '        <div class="signature-box">'
+    cHtml += '            <div class="line"></div>'
+    cHtml += '            <p><strong>' + cCompNom + '</strong><br>Comprador(a)<br>CPF: ' + cCompCPF + '</p>'
+    cHtml += '        </div>'
+    cHtml += '    </div>'
+
+    cHtml += '    <div class="signature-section" style="margin-top: 40px;">'
+    cHtml += '        <div class="signature-box">'
+    cHtml += '            <div class="line"></div>'
+    cHtml += '            <p>Testemunha 1<br>Nome:<br>RG:</p>'
+    cHtml += '        </div>'
+    cHtml += '        <div class="signature-box">'
+    cHtml += '            <div class="line"></div>'
+    cHtml += '            <p>Testemunha 2<br>Nome:<br>RG:</p>'
+    cHtml += '        </div>'
+    cHtml += '    </div>'
+    
+    // Rodapé Normativo
+    cHtml += '    <footer>'
+    cHtml += '        OBS: Este contrato é regulado pelos Arts. 481 a 532, do Novo Código Civil (Lei nº 10.406 de 10/01/2002), não se aplicando a Lei n. 8.078/1990 (Código de Defesa do Consumidor).'
+    cHtml += '    </footer>'
+    
+    cHtml += '</div>'
+    cHtml += '</body>'
+    cHtml += '</html>'
+Return cHtml
+
+// Função para gerar o CSS do relatório (Ajustado para formato contrato)
+Static Function getCss()
+    Local cCss := ""
+    cCss += "    <style>"
+    cCss += "        body {"
+    cCss += "            font-family: Arial, sans-serif;"
+    cCss += "            background-color: #f0f0f0;"
+    cCss += "            margin: 0;"
+    cCss += "            padding: 20px;"
+    cCss += "            color: #111;"
+    cCss += "        }"
+    cCss += "        .container {"
+    cCss += "            width: 190mm;"
+    cCss += "            min-height: 275mm;"
+    cCss += "            background-color: white;"
+    cCss += "            margin: 0 auto;"
+    cCss += "            padding: 20mm 15mm;"
+    cCss += "            box-shadow: 0 0 10px rgba(0,0,0,0.1);"
+    cCss += "            box-sizing: border-box;"
+    cCss += "            position: relative;"
+    cCss += "        }"
+    cCss += "        header {"
+    cCss += "            border-bottom: 2px solid #333;"
+    cCss += "            padding-bottom: 15px;"
+    cCss += "            margin-bottom: 25px;"
+    cCss += "        }"
+    cCss += "        .header-center {"
+    cCss += "            text-align: center;"
+    cCss += "        }"
+    cCss += "        .header-center h1 {"
+    cCss += "            font-size: 18px;"
+    cCss += "            margin: 5px 0;"
+    cCss += "            text-transform: uppercase;"
+    cCss += "        }"
+    cCss += "        .header-center h2 {"
+    cCss += "            font-size: 22px;"
+    cCss += "            margin: 0;"
+    cCss += "            color: #555;"
+    cCss += "            letter-spacing: 2px;"
+    cCss += "        }"
+    cCss += "        .header-center h3 {"
+    cCss += "            font-size: 13px;"
+    cCss += "            margin: 5px 0 0 0;"
+    cCss += "            font-weight: normal;"
+    cCss += "        }"
+    cCss += "        .section-title {"
+    cCss += "            font-weight: bold;"
+    cCss += "            margin: 25px 0 10px 0;"
+    cCss += "            text-transform: uppercase;"
+    cCss += "            font-size: 14px;"
+    cCss += "            border-left: 4px solid #333;"
+    cCss += "            padding-left: 8px;"
+    cCss += "        }"
+    cCss += "        .content {"
+    cCss += "            font-size: 13px;"
+    cCss += "            line-height: 1.6;"
+    cCss += "            text-align: justify;"
+    cCss += "        }"
+    cCss += "        .content p {"
+    cCss += "            margin-bottom: 15px;"
+    cCss += "            text-indent: 15mm;"
+    cCss += "        }"
+    cCss += "        .content p.final-text {"
+    cCss += "            text-indent: 0;"
+    cCss += "            margin-top: 30px;"
+    cCss += "            font-weight: bold;"
+    cCss += "        }"
+    cCss += "        .veiculo-table {"
+    cCss += "            width: 100%;"
+    cCss += "            border-collapse: collapse;"
+    cCss += "            margin: 20px 0;"
+    cCss += "            font-size: 13px;"
+    cCss += "        }"
+    cCss += "        .veiculo-table th {"
+    cCss += "            background-color: #f2f2f2;"
+    cCss += "            border: 1px solid #999;"
+    cCss += "            padding: 8px;"
+    cCss += "            text-align: center;"
+    cCss += "            font-size: 14px;"
+    cCss += "        }"
+    cCss += "        .veiculo-table td {"
+    cCss += "            border: 1px solid #cbcbcb;"
+    cCss += "            padding: 6px 12px;"
+    cCss += "        }"
+    cCss += "        .veiculo-table td:first-child {"
+    cCss += "            width: 30%;"
+    cCss += "            background-color: #fafafa;"
+    cCss += "        }"
+    cCss += "        .signature-section {"
+    cCss += "            margin-top: 50px;"
+    cCss += "            display: flex;"
+    cCss += "            justify-content: space-between;"
+    cCss += "            page-break-inside: avoid;"
+    cCss += "        }"
+    cCss += "        .signature-box {"
+    cCss += "            text-align: center;"
+    cCss += "            width: 45%;"
+    cCss += "        }"
+    cCss += "        .signature-box .line {"
+    cCss += "            border-top: 1px solid #000;"
+    cCss += "            margin-bottom: 5px;"
+    cCss += "            width: 100%;"
+    cCss += "        }"
+    cCss += "        .signature-box p {"
+    cCss += "            text-indent: 0 !important;"
+    cCss += "            font-size: 12px;"
+    cCss += "            margin: 0;"
+    cCss += "        }"
+    cCss += "        footer {"
+    cCss += "            margin-top: 40px;"
+    cCss += "            border-top: 1px dashed #bbb;"
+    cCss += "            padding-top: 10px;"
+    cCss += "            text-align: center;"
+    cCss += "            font-size: 10px;"
+    cCss += "            color: #555;"
+    cCss += "        }"
+    cCss += "        @media print {"
+    cCss += "            body { background-color: white; margin: 0; padding: 0; }"
+    cCss += "            .container { box-shadow: none; margin: 0; width: 100%; padding: 10mm 10mm; }"
+    cCss += "        }"
+    cCss += "    </style>"
+Return cCss
+
+// Função para gerar o arquivo a partir do HTML
+Static Function GeraPdf(cHtml)
+    Local cFileSrv := "\spool\x_venda_" + AllTrim(RetCodUsr()) + ".html"
+    Local cFileCli := GetClientDir() + "x_VENDA.html"
+    
+    cHtml += "<script type='text/javascript'>window.onload = function() { window.print(); }</script>"
+    
+    If MemoWrite(cFileSrv, EncodeUTF8(cHtml))
+        If __CopyFile(cFileSrv, cFileCli)
+            ShellExecute("OPEN", cFileCli, "", "", 1)
+        EndIf
+    EndIf
+Return
