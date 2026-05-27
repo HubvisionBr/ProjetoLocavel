@@ -11,7 +11,11 @@ Tabelas: [Espaço reservado para definição das tabelas do banco]
 User Function UFATR004()
 
     Local cRel := ""
+    Local aPergs    := {}
+    Local aRet    := {}
+    Local cCodBem    := Space(TamSx3("T9_CODIMOB")[1])
     Private cAliasRel := GetNextAlias()
+    
     
     // VARIÁVEIS PRIVADAS - DADOS DO VENDEDOR E REPRESENTANTES
     Private cVendNom, cVendCNPJ, cVendEnd, cVendDir1, cVendRG1, cVendCPF1, cVendRes1, cVendDir2, cVendRG2, cVendCPF2, cVendRes2
@@ -25,18 +29,24 @@ User Function UFATR004()
     // VARIÁVEIS PRIVADAS - DADOS DE PAGAMENTO E PRAZOS
     Private cValContr, cDataVenc, cForoComarca
 
-    If GetQuery()
-        cRel := GetHtml()
-        GeraPdf(cRel)
-    EndIf
+    aAdd(aPergs, {1, "Código do bem",  cCodBem,  "", ".T.", "ST9HV1", ".T.", 80,  .T.})
     
-    If Select(cAliasRel) > 0
-        (cAliasRel)->(DbCloseArea())
+    If ParamBox(aPergs, "Informe os parâmetros",@aRet)
+        If GetQuery(aRet[1])
+            cRel := GetHtml()
+            GeraPdf(cRel)
+        EndIf
+        
+        If Select(cAliasRel) > 0
+            (cAliasRel)->(DbCloseArea())
+        EndIf
+    Else
+        MsgInfo("Operação cancelada pelo usuário.")
     EndIf
 Return
 
 // Função para retornar os dados do relatório (Query reservada)
-Static Function GetQuery()
+Static Function GetQuery(cCodBem)
     Local lRet := .F.
     Local cQuery := ""
 
@@ -54,7 +64,7 @@ Static Function GetQuery()
     cQuery += " AND E1_CLIENTE = FN6_CLIENT "
     cQuery += " AND E1_LOJA = FN6_LOJA "
     cQuery += " AND SE1 .D_E_L_E_T_ = ' ' "
-    cQuery += " WHERE T9_CODIMOB = '20PR0022480001' "
+    cQuery += " WHERE T9_CODIMOB = '"+AllTrim(cCodBem)+"' "
     cQuery += " AND FN6_CLIENT <> '' "
     cQuery += " AND ST9.D_E_L_E_T_ = ' ' "
     cQuery := ChangeQuery(cQuery)
@@ -65,9 +75,9 @@ Static Function GetQuery()
     If !(cAliasRel)->(EoF())
     
         // 1. Atribuição - Dados do Vendedor
-        cVendNom    := "///////TODO///////"//"LOCAVEL BUS - JOAO PESSOA"
-        cVendCNPJ   := "///////TODO///////"//"03.776.266/0010-00"
-        cVendEnd    := "///////TODO///////"//"AV. GOV. ARGEMIRO DE FIGUEIREDO, CXP 734, 210, JARDIM OCEANIA, João Pessoa/PB, CEP: 58037030"
+        cVendNom    := SM0->M0_FULNAME
+        cVendCNPJ   := Transform(AllTrim(SM0->M0_CGC), "@R 99.999.999/9999-99")
+        cVendEnd    := AllTrim(SM0->M0_ENDENT) + ", " + AllTrim(SM0->M0_BAIRENT) + ", " + AllTrim(SM0->M0_CIDENT) + "/" + AllTrim(SM0->M0_ESTENT)
         
         // Diretor 1
         cVendDir1   := "NILDO DA SILVA MACHADO PEDROSA"
@@ -94,15 +104,17 @@ Static Function GetQuery()
         cVeicRenavam:= AllTrim((cAliasRel)->T9_RENAVAM)
         cVeicChassis:= AllTrim((cAliasRel)->T9_CHASSI)
         cVeicCor    := AllTrim((cAliasRel)->T9_CORVEI)
-        cVeicHodo   := "///////TODO///////"//"067.576"
+        cVeicHodo   := Transform((cAliasRel)->T9_POSCONT, "@E 9,999,999.99")
         cVeicValor  := Transform((cAliasRel)->T9_VALCPA, "@E 9,999,999.99")
 
         // 4. Atribuição - Dados Financeiros e de Foro
         cValContr   := Transform((cAliasRel)->E1_VALOR, "@E 9,999,999.99")
         cDataVenc   := DTOC(STOD((cAliasRel)->E1_VENCREA))
-        cForoComarca:= "///////TODO///////"//"Recife/PE"
+        cForoComarca:= "Recife (PE)"
 
         lRet := .T.
+    Else
+        MsgInfo("Nenhum registro encontrado para o código de bem informado.")
     EndIf
 Return lRet
 
