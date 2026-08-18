@@ -19,7 +19,7 @@
 User Function CRIAITEM()
 Processa( {|| PrcCtb01()} ,OemToAnsi("Atualização do Item Contábil - Fornecedores"),"Processando...")
 Processa( {|| PrcCtb02()} ,OemToAnsi("Atualização do Item Contábil - Clientes"),"Processando...")
-Processa( {|| PrcCtb03()} ,OemToAnsi("Atualização do Item Contábil - Bancos"),"Processando...")
+// Processa( {|| PrcCtb03()} ,OemToAnsi("Atualização do Item Contábil - Bancos"),"Processando...")
 Return
 
 Static Function PrcCtb01()

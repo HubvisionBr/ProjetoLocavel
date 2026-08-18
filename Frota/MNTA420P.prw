@@ -1,0 +1,65 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "FWMVCDEF.CH"
+
+User Function MNTA420P()
+    Local cBody := ""
+    Local nOPCX := 0
+    Local aPergs    := {}
+    Local aRet      := {}
+    Local cLocal    := Space(6)
+    Local cFornece  := ""
+    
+    aAdd(aPergs, {1, "Local",  cLocal,  "", ".T.", "SNL", ".T.", 80,  .T.})
+    
+    // Parâmetro
+    nOPCX := ParamIxb[1] // Inclusão, Alteração ou Exclusão
+ 
+    If nOPCX == 3 .and. !Empty(M->TJ_CODBEM) .and. !Empty(M->TJ_SERVICO);
+        .and. Alltrim(M->TJ_SITUACA) == "L" .and. Alltrim(M->TJ_TERCEIR) == "2";
+        .and. !Empty(M->TL_CODIGO) .and. Alltrim(M->TL_TIPOREG) == "T"
+        // Posição do cursor no bem
+        ST9->(DbSetOrder(1))
+        If ST9->(DbSeek(xFilial('ST9')+M->TJ_CODBEM))   
+            // Coleta o local do usuário
+            If ParamBox(aPergs, "Informe os parâmetros",@aRet)
+                // Pega o nome do fornecedor
+                cFornece := NOMINSBRW(M->TL_TIPOREG,M->TL_CODIGO,M->TL_LOJA)
+                If Empty(cFornece)
+                    cFornece := AllTrim(POSICIONE("SA2",1,XFILIAL("SA2")+STL->TL_FORNEC+STL->TL_LOJA,"A2_NOME"))
+                EndIf
+                // Monta Json
+                cBody := '{'
+                cBody += '    "task": '
+                cBody += '        {'
+                cBody += '        "tsk_active": 1,'
+                cBody += '        "tsk_integrationid": null,'
+                cBody += '        "stn_id": 30,'
+                cBody += '        "age_id": null,'
+                cBody += '        "tea_integrationid": "'+Alltrim(aRet[1])+'",'
+                cBody += '        "tsf_id": 1,'
+                cBody += '        "loc_alternativeidentifier": "'+Alltrim(aRet[1])+'",'
+                cBody += '        "ast_id": null,'
+                cBody += '        "tty_id": 34,'//terceiro
+                cBody += '        "tsk_scheduleinitialdatehour": "'+Year2Str(date())+"-"+Month2Str(date())+"-"+Day2Str(date())+'T'+time()+'.000Z",'
+                cBody += '        "tsk_schedulefinaldatehour": null,'
+                cBody += '        "tsk_observation": "FORNECEDOR: '+AllTrim(M->TL_CODIGO)+'-'+cFornece+' PLACA: '+AllTrim(ST9->T9_PLACA)+' CHASSI: '+AllTrim(ST9->T9_CHASSI)+'",'
+                cBody += '        "tsk_priority": null,'
+                cBody += '        "tsk_technicalinstruction": null,'
+                cBody += '        "cf_placa": "'+ST9->T9_PLACA+'",'
+                cBody += '        "cf_chassi": "'+ST9->T9_CHASSI+'",'
+                cBody += '        "cf_tipo": "'+"SAIDA"+'",'
+                cBody += '        "cf_modelo": "'+ST9->T9_NOME+'",'
+                cBody += '        "cf_marca": ""'
+                cBody += '        }'
+                cBody += '}'
+
+                U_EnvioMobCode(cBody,"task/create")
+            Else
+                MsgInfo("Operação cancelada pelo usuário, a tarefa não foi enviada ao MobCode pelo fato do local não ter sido escolhido.")
+            EndIf
+        Else
+            MsgStop("Bem não encontrado: "+M->TJ_CODBEM)
+        EndIf
+    EndIf
+ 
+Return .T.

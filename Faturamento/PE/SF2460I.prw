@@ -4,148 +4,189 @@
 #INCLUDE 'RWMAKE.CH'
 #INCLUDE "TBICONN.CH"
 
-User Function SF2460I
-	Local aArea := GetArea()
-	Local cNota   := SF2->F2_DOC
-	Local cSerie  := SF2->F2_SERIE
-	Local cCliente:= SF2->F2_CLIENTE
-	Local cLojaCli:= SF2->F2_LOJA
+User Function SF2460I()
+    Local aArea    := GetArea()
+    Local cNota    := SF2->F2_DOC
+    Local cSerie   := SF2->F2_SERIE
+    Local cCliente := SF2->F2_CLIENTE
+    Local cLojaCli := SF2->F2_LOJA
+    Local cChave   := SF2->F2_CHVNFE // Captura a Chave da NFe da nota de saída
 
-	FWMsgRun(, {|| U_REMET(cNota,cSerie,cCliente,cLojaCli,3)}, "Processando nota", "Aguarde...")
-	
+    // Passa a chave da NFe como 6º parâmetro
+    FWMsgRun(, {|| U_REMET(cNota, cSerie, cCliente, cLojaCli, 3, cChave)}, "Processando nota", "Aguarde...")
+    
     RestArea(aArea)
-
 Return
 
-User Function REMET(cNota,cSerie,cCliente,cLojaCli,nOpc,cChaveNfe)
-	Local aArea := GetArea()
-	// Local cCGCFor
-	Local aItemNF := {}
-	Local aLinha  := {}
-	Local aFiliais := FwLoadSM0()
-	Local nPosFil
-	Local cTes := ""
-	Local lValida := .F.
-	Default cChaveNfe := ""
-	
-	Begin Transaction
+User Function REMET(cNota, cSerie, cCliente, cLojaCli, nOpc, cChaveNfe)
+    Local aArea    := GetArea()
+    Local aItemNF  := {}
+    Local aLinha   := {}
+    Local aCabNF   := {}
+    Local aFiliais := FwLoadSM0()
+    Local nPosFil  := 0
+    Local cTes     := ""
+    Local cCodFor  := ""
+    Local cLojFor  := ""
+    Local cOper    := ""
+    Local cFilBkp  := cFilAnt
+    Local lOk      := .F. // Variável para retornar se o processo deu certo
 
-	IF SF2->F2_TIPO == 'N'
+    Default cChaveNfe := ""
+    
+    Begin Transaction
 
-		//Verifica a filial do cliente
-		dbSelectArea("SA1")
-		SA1->(dbSetOrder(1))
-		SA1->(dbSeek(xFilial("SA1")+ cCliente + cLojaCli))
-		nPosFil := aScan(aFiliais,{|x| alltrim(x[18]) == Alltrim(SA1->A1_CGC)})
+    IF SF2->F2_TIPO == 'N'
 
-		IF nPosFil > 0
-			dbSelectArea("SA2")
-			SA2->(dbSetOrder(3)) //CNPJ
-			SA2->(dbSeek(xFilial("SA2")+ SM0->M0_CGC))
-			If Found()
-				cCodFor := SA2->A2_COD
-				cLojFor := SA2->A2_LOJA	
-			Else
-				MsgAlert("Filial de origem " +Alltrim(SM0->M0_CODFIL)+ " - "+Alltrim(SM0->M0_FILIAL)+" não cadastrado como fornecedor!")
-				DisarmTransaction()
-				Return
-			Endif
+        // Verifica a filial do cliente
+        dbSelectArea("SA1")
+        SA1->(dbSetOrder(1))
+        SA1->(dbSeek(xFilial("SA1") + cCliente + cLojaCli))
+        nPosFil := aScan(aFiliais, {|x| AllTrim(x[18]) == AllTrim(SA1->A1_CGC)})
 
-			IF aFiliais[nPosFil][2] <> cFilAnt //Se a filial de destino igual da origem
+        IF nPosFil > 0
+            dbSelectArea("SA2")
+            SA2->(dbSetOrder(3)) // CNPJ
+            SA2->(dbSeek(xFilial("SA2") + SM0->M0_CGC))
+            If Found()
+                cCodFor := SA2->A2_COD
+                cLojFor := SA2->A2_LOJA 
+            Else
+                MsgAlert("Filial de origem " + AllTrim(SM0->M0_CODFIL) + " - " + AllTrim(SM0->M0_FILIAL) + " não cadastrada como fornecedor!")
+                DisarmTransaction()
+                RestArea(aArea)
+                Return .F.
+            Endif
 
-				//*************************
-				//Cabecalho da execauto
-				//*************************
-				aCabNF := {{"F1_TIPO"		,"N"	        ,NIL},;
-							{"F1_FORMUL"	,"N"			,NIL},;
-							{"F1_DOC"		,cNota           ,NIL},;
-							{"F1_SERIE"	    ,cSerie 		,NIL},;
-							{"F1_EMISSAO"	,SF2->F2_EMISSAO,NIL},;
-							{"F1_FORNECE"	,cCodFor     	,NIL},;
-							{"F1_LOJA"	    ,cLojFor     	,NIL},;
-							{"F1_COND" 	    ,SF2->F2_COND   ,NIL},;
-							{"F1_CHVNFE"    ,cChaveNfe	    ,NIL},;
-							{"F1_ESPECIE"	,"NF"    		,NIL}}
+            IF aFiliais[nPosFil][2] <> cFilAnt // Se a filial de destino é diferente da origem
 
-				If (!dbSeek( xFilial( "SF1" ) + cNota + cSerie + cCodFor + cLojFor + "N" ) .and. nopc == 3) .or. (dbSeek( xFilial( "SF1" ) + cNota + cSerie + cCodFor + cLojFor + "N" ) .and. nopc == 5)
-					If !ApMsgYesNo("Será "+IIF(nOpc==3,"gerada","excluida")+" a Nota de Entrada  " + ALLTRIM(cNota) + "  série  " + ALLTRIM(cSerie) + ". Confirma ?","Atenção")
-						DisarmTransaction()
-						Return
-					Endif
-				Else
-					IF nOpc == 3
-						MsgInfo("Nota Fiscal " + Alltrim(cNota) + " Serie + " + Alltrim(cSerie) + " ja existe na base de dados. Verifique...","Informação",)
-						DisarmTransaction()
-						Return
-					Endif
-				Endif
+                // ************************************************
+                // Cabeçalho da ExecAuto
+                // ************************************************
+                aCabNF := {;
+                    {"F1_TIPO"    , "N"             , NIL},;
+                    {"F1_FORMUL"  , "N"             , NIL},;
+                    {"F1_DOC"     , cNota           , NIL},;
+                    {"F1_SERIE"   , cSerie          , NIL},;
+                    {"F1_EMISSAO" , SF2->F2_EMISSAO , NIL},;
+                    {"F1_FORNECE" , cCodFor         , NIL},;
+                    {"F1_LOJA"    , cLojFor         , NIL},;
+                    {"F1_COND"    , SF2->F2_COND    , NIL},;
+                    {"F1_CHVNFE"  , cChaveNfe       , NIL},;
+                    {"F1_ESPECIE" , "NF"            , NIL};
+                }
 
-				//************************************************
-				//Monta array dos itens da nota
-				//************************************************
-				aItemNF := {}
-				aLinha  := {}
+                cFilAnt := aFiliais[nPosFil][2] // Troca contexto para a Filial de Destino para validações de existência de SF1
 
-				dbSelectArea("SD2")
-				SD2->(dbSetOrder(3))
-				SD2->(dbGoTop())
-				if SD2->(dbSeek(xFilial("SD2")+ cNota + cSerie))
-					While (cNota + cSerie) == SD2->(D2_DOC + D2_SERIE) .and. !Eof()
-						cOper := SuperGetMv("LC_TRANSFI",,"")
-						DbSelectArea("SB1")
-						SB1->(DbSetOrder(1))
-						SB1->(MsSeek(xFilial("SB1") + SD2->D2_COD))
-						cFilBkp := cFilAnt
-						cFilAnt := aFiliais[nPosFil][2]
-						CriaSb2(SB1->B1_COD,SB1->B1_LOCPAD)
-						cFilAnt := cFilBkp
-						cTes := MaTesInt( 1, cOper, cCodFor, cLojFor, "F", SB1->B1_COD, Nil)
+                // POSICIONAMENTO CORRETO NA SF1
+                dbSelectArea("SF1")
+                SF1->(dbSetOrder(1))
 
+                If (!SF1->(dbSeek(xFilial("SF1") + cNota + cSerie + cCodFor + cLojFor + "N")) .and. nOpc == 3) .or. ;
+                   (SF1->(dbSeek(xFilial("SF1") + cNota + cSerie + cCodFor + cLojFor + "N")) .and. nOpc == 5)
 
-						AADD(aLinha,{"D1_COD"		,SD2->D2_COD    ,NIL})
-						AADD(aLinha,{"D1_LOCAL"		,SB1->B1_LOCPAD ,NIL})
-						AADD(aLinha,{"D1_UM"		,SD2->D2_UM 	,NIL})
-						AADD(aLinha,{"D1_VUNIT"		,SD2->D2_PRCVEN ,NIL})
-						AADD(aLinha,{"D1_QUANT"		,SD2->D2_QUANT 	,NIL})
-						AADD(aLinha,{"D1_TOTAL"		,SD2->D2_TOTAL	,NIL})
-						AADD(aLinha,{"D1_OPER"		,cOper			,NIL})
-						AADD(aLinha,{"D1_TES"		,cTes			,NIL})
-						AADD(aLinha,{"D1_LOTECTL"	,SD2->D2_LOTECTL,NIL})
-						AADD(aLinha,{"D1_NUMLOTE"	,SD2->D2_NUMLOTE,NIL})
-						AADD(aLinha,{"D1_DTVALID"	,SD2->D2_DTVALID,NIL})
+                    If !ApMsgYesNo("Será " + IIF(nOpc == 3, "gerada", "excluída") + " a Nota de Entrada " + ALLTRIM(cNota) + " série " + ALLTRIM(cSerie) + ". Confirma ?", "Atenção")
+                        cFilAnt := cFilBkp
+                        DisarmTransaction()
+                        RestArea(aArea)
+                        Return .F.
+                    Endif
+                Else
+                    IF nOpc == 3
+                        MsgInfo("Nota Fiscal " + AllTrim(cNota) + " Serie " + AllTrim(cSerie) + " já existe na base de dados da filial " + cFilAnt + ". Verifique...", "Informação")
+                        cFilAnt := cFilBkp
+                        DisarmTransaction()
+                        RestArea(aArea)
+                        Return .F.
+                    Endif
+                Endif
 
-						aAdd( aItemNF, Aclone( aLinha ) )
-						aLinha := {}
+                cFilAnt := cFilBkp // Retorna para Filial Origem para ler SD2
 
-						SD2->(dbSkip())
-					EndDo
-				Endif
+                // ************************************************
+                // Monta array dos itens da nota
+                // ************************************************
+                aItemNF := {}
+                
+                dbSelectArea("SD2")
+                SD2->(dbSetOrder(3))
+                if SD2->(dbSeek(xFilial("SD2") + cNota + cSerie))
+                    
+                    cOper := SuperGetMv("LC_TRANSFI", , "")
 
-				lMsErroAuto := .F.
+                    While SD2->(!Eof()) .and. (cNota + cSerie) == (SD2->D2_DOC + SD2->D2_SERIE)
+                        
+                        // Mudança crucial: Posiciona o Produto e calcula TES NO CONTEXTO DA FILIAL DE DESTINO
+                        cFilAnt := aFiliais[nPosFil][2]
 
-				IF Len(aItemNF) > 0
-					cFilAnt := aFiliais[nPosFil][2]
-					//****************************
-					//Gera NF de Entrada
-					//****************************
+                        DbSelectArea("SB1")
+                        SB1->(DbSetOrder(1))
+                        If !SB1->(MsSeek(xFilial("SB1") + SD2->D2_COD))
+                            MsgStop("Produto " + SD2->D2_COD + " não encontrado na filial de destino (" + cFilAnt + ")!")
+                            cFilAnt := cFilBkp
+                            DisarmTransaction()
+                            RestArea(aArea)
+                            Return .F.
+                        EndIf
 
-					MsExecAuto({|x,y,z| MATA103(x,y,z)},aCabNF,aItemNF,nOpc)
+                        // Garante estrutura da SB2 na filial de destino
+                        CriaSb2(SB1->B1_COD, SB1->B1_LOCPAD)
+                        
+                        // Calcula TES Inteligente no Destino
+                        cTes := MaTesInt(1, cOper, cCodFor, cLojFor, "F", SB1->B1_COD, Nil)
 
-					If lMsErroAuto
-						MostraErro()
-						DisarmTransaction()
-					Else
-						IF nOpc == 3
-							MsgBox("Nota Fiscal de Entrada criada com o número/serie " + cNota + " / " + cSerie + ".","A T E N C A O","INFO")
-						Endif
-					EndIf
-				Endif
-				cFilAnt := cFilBkp
-			Endif
-		Endif
-	Endif
-	End Transaction
-	
-	RestArea(aArea)
+                        cFilAnt := cFilBkp // Volta temporariamente para ler dados do SD2 se necessário
 
-Return
+                        // Montagem da linha com o D1_ITEM incluso
+                        aLinha := {}
+                        AADD(aLinha, {"D1_ITEM"   , SD2->D2_ITEM   , NIL}) // Campo OBRIGATÓRIO adicionado
+                        AADD(aLinha, {"D1_COD"    , SD2->D2_COD    , NIL})
+                        AADD(aLinha, {"D1_LOCAL"  , SB1->B1_LOCPAD , NIL})
+                        AADD(aLinha, {"D1_UM"     , SD2->D2_UM     , NIL})
+                        AADD(aLinha, {"D1_VUNIT"  , SD2->D2_PRCVEN , NIL})
+                        AADD(aLinha, {"D1_QUANT"  , SD2->D2_QUANT  , NIL})
+                        AADD(aLinha, {"D1_TOTAL"  , SD2->D2_TOTAL  , NIL})
+                        AADD(aLinha, {"D1_OPER"   , cOper          , NIL})
+                        AADD(aLinha, {"D1_TES"    , cTes           , NIL})
+                        AADD(aLinha, {"D1_LOTECTL", SD2->D2_LOTECTL, NIL})
+                        AADD(aLinha, {"D1_NUMLOTE", SD2->D2_NUMLOTE, NIL})
+                        AADD(aLinha, {"D1_DTVALID", SD2->D2_DTVALID, NIL})
+
+                        aAdd(aItemNF, aClone(aLinha))
+
+                        SD2->(dbSkip())
+                    EndDo
+                Endif
+
+                lMsErroAuto := .F.
+
+                IF Len(aItemNF) > 0
+                    // Altera contexto para a filial de destino para executar a inclusão
+                    cFilAnt := aFiliais[nPosFil][2]
+
+                    // Executa a inclusão da NF de Entrada
+                    MsExecAuto({|x, y, z| MATA103(x, y, z)}, aCabNF, aItemNF, nOpc)
+
+                    If lMsErroAuto
+                        MostraErro()
+                        DisarmTransaction()
+                        lOk := .F.
+                    Else
+                        lOk := .T.
+                        IF nOpc == 3
+                            MsgBox("Nota Fiscal de Entrada criada com sucesso na filial " + cFilAnt + " - Número: " + cNota + " / Série: " + cSerie, "A T E N Ç Ã O", "INFO")
+                        ElseIf nOpc == 5
+                            MsgBox("Nota Fiscal de Entrada estornada com sucesso na filial " + cFilAnt + " - Número: " + cNota + " / Série: " + cSerie, "A T E N Ç Ã O", "INFO")
+                        Endif
+                    EndIf
+                Endif
+                
+                cFilAnt := cFilBkp // Restaura a filial de origem ao finalizar
+            Endif
+        Endif
+    Endif
+
+    End Transaction
+    
+    RestArea(aArea)
+Return lOk
