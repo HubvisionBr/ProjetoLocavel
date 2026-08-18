@@ -34,6 +34,7 @@ If alltrim(funname()) == "ATFA036"
         cIdentAtiv += alltrim(SN1->N1_CODBAR) + " - " 
         cIdentAtiv += alltrim(SN1->N1_CODCUSD ) + "/" 
         cIdentAtiv += alltrim(SN1->N1_TPOUTR ) 
+        cIdentAtiv += "Especie 1: "+alltrim(FN6_ESPEC1 ) //Nesse momento a FN6 está em memoria, ainda não foi gravada no banco, mas já está disponível para consulta.
 
         Reclock("SF2",.f.)
         Replace F2_MENNOTA with alltrim(SF2->F2_MENNOTA) + cIdentAtiv

@@ -76,7 +76,7 @@ User Function HVP0401M()
                 While !(cAlias)->(Eof())
                     DbSelectArea(cAliasTmp)
 
-                    IF (cAlias)->CP_FILIAL <> (cAlias)->B2_FILIAL
+                    IF (cAlias)->CP_FILIAL <> (cAlias)->B2_FILIAL .OR. (cAlias)->CP_LOCAL <> (cAlias)->B2_LOCAL
                         lContem := .T.
                         RecLock(cAliasTmp,.T.)
                         // cKey := (cAlias)->CP_NUM 

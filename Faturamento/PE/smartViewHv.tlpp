@@ -1,0 +1,249 @@
+#include "protheus.ch"
+#include "msobject.ch"
+#include "totvs.framework.treports.integratedprovider.th"
+
+// namespace controle.Comprovantes.Impressos
+using namespace totvs.framework.treports.integratedprovider
+
+User function smartViewHv()//controle.Comprovantes.Impressos.U_smartViewHv
+	Local lSuccess as logical
+	Local oSmartView as object
+
+	If GetRpoRelease() >= "12.1.2210"
+		// Nomeclatura do Modelo TRP
+		oSmartView := totvs.framework.smartview.callSmartView():new("SmartView.Hv", "report")
+		oSmartView:setShowWizard(.T.)
+		lSuccess := oSmartView:executeSmartView(.T.)
+		If !lSuccess
+			Conout(oSmartView:getError())
+		EndIf
+		oSmartView:destroy()
+		freeObj(oSmartView)
+	EndIf
+
+Return
+//Definiição de Tabelas Protheus
+@totvsFrameworkTReportsIntegratedProvider(active=.T. /*team="SIGACOM", tables="SB1,SBM", name="SmartView HV", country="ALL", initialRelease="12.1.2410"*/)
+//-------------------------------------------------------------------
+/*{Protheus.doc} smartViewHv
+Classe para criação do Objeto de Negócio de Relação de titulos pagos para o TReports
+
+@author Gabriel Paiva
+@since 29/08/2025
+@version 2.0
+*/
+//-------------------------------------------------------------------
+class smartViewHv from totvs.framework.treports.integratedprovider.IntegratedProvider
+	public method new() as object
+	public method getData() as object
+	public method getSchema() as object
+
+	protected data aFields as array
+	protected data aStruct as array
+
+endclass
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} new
+Método de instância da classe
+
+@return object: self
+
+@author Jorge Lafaiete
+@since 11/12/2024
+@version 1.0
+*/
+//-------------------------------------------------------------------
+method new() class smartViewHv
+	_Super:new()
+	self:appendArea("Compras")
+	self:setDisplayName("Smart View HV")
+	self:setDescription("Smart View HV")
+
+	// self:aFields := {"ZZ1_NOME","ZZ2_SERIE","ZZ2_ANO","ZZ2_PRODUT","B1_DESC","ZZ2_QUANT","DA1_PRCVEN","TOTAL","ZZ3_COD","ZZ3_DESC","X5_CHAVE","X5_DESCRI","ZZ2_OBS"}
+  self:aFields := {"BM_FILIAL", "BM_GRUPO", "BM_DESC", "BM_STATUS", "B1_COD", "B1_DESC", "B1_TIPO", "B1_UM", "B1_LOCPAD"}
+	self:aStruct := getStruct(self:aFields)
+
+return self
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} getData
+Retorna os dados do objeto de negócio
+
+@param nPage, numérico, indica a página atual do relatório
+@param oFilter, objeto, contém o filtro do TReports
+
+@return object: self:oData
+
+@author Jorge Lafaiete
+@since 11/12/2024
+@version 1.0
+*/
+//-------------------------------------------------------------------
+method getData(nPage as numeric, oFilter as object) as object class smartViewHv
+	local cQuery := ""  as character
+	local cAlias        as character
+	local nSkip         as numeric
+	local jItems        as json
+	local nX            as numeric
+	local nCount        := 0 as numeric
+	Local jParams		:= oFilter:getParameters() as json
+
+	// conout('smartview parametros-> json: 		' + jParams:toJson() )
+
+	cQuery := " SELECT "
+	cQuery += "   BM_FILIAL, "
+	cQuery += "   BM_GRUPO, "
+	cQuery += "   BM_DESC, "
+	cQuery += "   BM_STATUS, "
+	cQuery += "   B1_COD, "
+	cQuery += "   B1_DESC, "
+	cQuery += "   B1_TIPO, "
+	cQuery += "   B1_UM, "
+	cQuery += "   B1_LOCPAD "
+	cQuery += " FROM " + RetSQLName("SBM") + " SBM "
+	cQuery += " INNER JOIN " + RetSQLName("SB1") + " SB1 "
+	cQuery += " ON BM_FILIAL =  "+ ValtoSql(fwxfilial("SBM"))
+	cQuery += "   AND BM_GRUPO = B1_GRUPO "
+	cQuery += "   AND SB1.D_E_L_E_T_ = '' "
+	cQuery += " WHERE BM_GRUPO = ? "
+	cQuery += "   AND SBM.D_E_L_E_T_ = '' "
+
+	oExec  := FwExecStatement():New(ChangeQuery(cQuery))
+
+	setDefaultParams(@jParams)
+	oExec:setString(1, jParams['GRUPO'][1] )
+
+
+	conout('smartview parametros-> getFixQuery: ' + oExec:getFixQuery())
+
+	cAlias := oExec:OpenAlias()
+
+	if nPage == 1
+		(cAlias)->(dbGoTop())
+	else
+		//Encontra a quantidade de itens que irá pular de acordo com a página atual
+		nSkip := ((nPage - 1) * self:getPageSize())
+		(cAlias)->(dbSkip(nSkip))
+	endif
+
+	while !(cAlias)->(Eof())
+		jItems := JsonObject():new()
+
+		for nX := 1 To Len(self:aStruct)
+
+				if self:aStruct[nX][3] == "date"
+					jItems[self:aStruct[nX][1]] := StoD((cAlias)->&(self:aStruct[nX][5]))
+				else
+					jItems[self:aStruct[nX][1]] := (cAlias)->&(self:aStruct[nX][5])
+				endif
+		next nX
+
+		self:oData:appendData(jItems)
+
+		conout('linha '+cvaltochar(nCount)+' dados ->jItems: ' + jItems:toJson())
+
+		(cAlias)->(DBSkip())
+		nCount++
+
+		//Sai do loop quando chegar no tamanho de itens da página
+		if nCount == self:getPageSize()
+			exit
+		endif
+	enddo
+
+	//Se não for o último registro indica que terá próxima página
+	self:setHasNext(!(cAlias)->(Eof()))
+
+	(cAlias)->(DBCloseArea())
+
+return self:oData
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} getSchema
+Retorna a estrutura dos campos
+
+@return object: self:oSchema
+
+@author Jorge Lafaiete
+@since 11/12/2024
+@version 1.0
+*/
+//-------------------------------------------------------------------
+method getSchema() as object class smartViewHv
+	Local nX as numeric
+
+	//Campos novos self:addProperty("Descricao", "Descrição da Natureza", "string", "Descrição", "ED_DESCRIC")
+	for nX := 1 To Len(self:aStruct)
+		self:addProperty(self:aStruct[nX][1], self:aStruct[nX][2], self:aStruct[nX][3], self:aStruct[nX][4], self:aStruct[nX][5])
+	Next nX
+
+	self:addParameter("GRUPO"  	, "Grupo"				, "string"	, .F.)
+
+	//Consulta dos parâmetros
+	self:setCustomURL("Grupo"	, "api/framework/v1/genericLookupService/smartview/SBM", 2)
+	// self:setCustomURL("SERIE"	, "api/framework/v1/genericLookupService/smartview/ZZ3GRP", 2)
+	// self:setCustomURL("ANO"		, "api/framework/v1/genericLookupService/smartview/SA6", 2)
+
+return self:oSchema
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} getStruct
+Prepara a estrutura dos campos
+
+@param aFlds array: Array com os campos do relatório
+
+@return array: Array com a estrutura dos campos
+
+@author Jorge Lafaiete
+@since 11/12/2024
+@version 1.0
+*/
+//-------------------------------------------------------------------
+Static function getStruct(aFlds)
+	Local aFldTmp  := {}  as array
+
+	// AAdd(aFldTmp, {"ZZ1_NOME"	, FWSX3Util():GetDescription("ZZ1_NOME"), "string", FwX3Titulo(Upper("ZZ1_NOME")), "ZZ1_NOME"})
+	// // AAdd(aFldTmp, {"ZZ2_SERIE"	, FWSX3Util():GetDescription("ZZ2_SERIE"), "string", FwX3Titulo(Upper("ZZ2_SERIE")), "ZZ2_SERIE"})
+	// AAdd(aFldTmp, {"ZZ2_ANO"	, FWSX3Util():GetDescription("ZZ2_ANO"), "string", FwX3Titulo(Upper("ZZ2_ANO")), "ZZ2_ANO"})
+	// AAdd(aFldTmp, {"ZZ2_PRODUT"	, FWSX3Util():GetDescription("ZZ2_PRODUT"), "string", FwX3Titulo(Upper("ZZ2_PRODUT")), "ZZ2_PRODUT"})
+	// AAdd(aFldTmp, {"B1_DESC"	, FWSX3Util():GetDescription("B1_DESC"), "string", FwX3Titulo(Upper("B1_DESC")), "B1_DESC"})
+	// AAdd(aFldTmp, {"ZZ2_QUANT"	, FWSX3Util():GetDescription("ZZ2_QUANT"), "number", FwX3Titulo(Upper("ZZ2_QUANT")), "ZZ2_QUANT"})
+	// AAdd(aFldTmp, {"DA1_PRCVEN"	, FWSX3Util():GetDescription("DA1_PRCVEN"), "number", FwX3Titulo(Upper("DA1_PRCVEN")), "DA1_PRCVEN"})
+	// AAdd(aFldTmp, {"TOTAL"	, "TOTAL", "number", "TOTAL", "TOTAL"})
+	// AAdd(aFldTmp, {"ZZ3_COD"	, FWSX3Util():GetDescription("ZZ3_COD"), "string", FwX3Titulo(Upper("ZZ3_COD")), "ZZ3_COD"})
+	// AAdd(aFldTmp, {"ZZ3_DESC"	, FWSX3Util():GetDescription("ZZ3_DESC"), "string", FwX3Titulo(Upper("ZZ3_DESC")), "ZZ3_DESC"})
+	// AAdd(aFldTmp, {"X5_CHAVE"	, FWSX3Util():GetDescription("X5_CHAVE"), "string", FwX3Titulo(Upper("X5_CHAVE")), "X5_CHAVE"})
+	// AAdd(aFldTmp, {"X5_DESCRI"	, FWSX3Util():GetDescription("X5_DESCRI"), "string", FwX3Titulo(Upper("X5_DESCRI")), "X5_DESCRI"})
+	// AAdd(aFldTmp, {"ZZ2_OBS"	, FWSX3Util():GetDescription("ZZ2_OBS"), "string", FwX3Titulo(Upper("ZZ2_OBS")), "ZZ2_OBS"})
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	AAdd(aFldTmp, {"BM_FILIAL" , FWSX3Util():GetDescription("BM_FILIAL"), "string", FwX3Titulo(Upper("BM_FILIAL")), "BM_FILIAL"})
+	AAdd(aFldTmp, {"BM_GRUPO"  , FWSX3Util():GetDescription("BM_GRUPO"), "string", FwX3Titulo(Upper("BM_GRUPO")), "BM_GRUPO"})
+	AAdd(aFldTmp, {"BM_DESC"   , FWSX3Util():GetDescription("BM_DESC"), "string", FwX3Titulo(Upper("BM_DESC")), "BM_DESC"})
+	AAdd(aFldTmp, {"BM_STATUS" , FWSX3Util():GetDescription("BM_STATUS"), "string", FwX3Titulo(Upper("BM_STATUS")), "BM_STATUS"})
+	AAdd(aFldTmp, {"B1_COD"    , FWSX3Util():GetDescription("B1_COD"), "string", FwX3Titulo(Upper("B1_COD")), "B1_COD"})
+	AAdd(aFldTmp, {"B1_DESC"   , FWSX3Util():GetDescription("B1_DESC"), "string", FwX3Titulo(Upper("B1_DESC")), "B1_DESC"})
+	AAdd(aFldTmp, {"B1_TIPO"   , FWSX3Util():GetDescription("B1_TIPO"), "string", FwX3Titulo(Upper("B1_TIPO")), "B1_TIPO"})
+	AAdd(aFldTmp, {"B1_UM"     , FWSX3Util():GetDescription("B1_UM"), "string", FwX3Titulo(Upper("B1_UM")), "B1_UM"})
+	AAdd(aFldTmp, {"B1_LOCPAD" , FWSX3Util():GetDescription("B1_LOCPAD"), "string", FwX3Titulo(Upper("B1_LOCPAD")), "B1_LOCPAD"})
+return aFldTmp
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} setDefaultParams
+Seta os valores padrões do parâmetros caso estejam vazios
+
+@param jParam json: Parâmetros recebidos
+
+@author Jorge Lafaiete
+@since 11/12/2024
+@version 1.0
+*/
+//-------------------------------------------------------------------
+Static function setDefaultParams(jParams)
+
+	if jParams:hasproperty('GRUPO') .And. empty(jParams['GRUPO'][1])
+		jParams['GRUPO'][1] := "     "//SPACE(TamSx3("ZZ1_COD")[1])
+	EndIf
+
+return

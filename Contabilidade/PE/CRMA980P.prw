@@ -31,7 +31,7 @@ User Function CRMA980()
         If nOperation == 3  .And. cIdPonto == "MODELCOMMITTTS"
             RecLock("CTD",.T.)
 
-            cItemcont := "CLI" + SA1->A1_COD + SA1->A1_LOJA
+            cItemcont := "C" + SA1->A1_COD + SA1->A1_LOJA
 
             Replace CTD_FILIAL With xFilial("CTD") , ;
                     CTD_ITEM   With cItemcont      , ;
